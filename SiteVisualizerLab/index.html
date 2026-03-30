@@ -129,8 +129,8 @@
                 <div class="col-12 col-lg-6 visualizer-column position-relative">
                     <h2 class="visually-hidden">الخريطة البصرية للموقع</h2><div class="position-absolute top-0 end-0 m-2 d-flex gap-1" style="z-index:10;"><button class="btn btn-dark btn-sm d-none" id="exportCsvBtn" title="تصدير البيانات كـ CSV" aria-label="تصدير البيانات كـ CSV"><i class="bi bi-filetype-csv"></i></button><button class="btn btn-dark btn-sm d-none" id="exportPngBtn" title="تصدير كصورة PNG" aria-label="تصدير كصورة PNG"><i class="bi bi-download"></i></button><button class="btn btn-dark btn-sm d-none" id="fullscreenBtn" title="وضع ملء الشاشة (F)" aria-label="وضع ملء الشاشة"><i class="bi bi-arrows-fullscreen"></i></button>
                     </div>
-                    <div class="d-none w-100 h-100" id="site-graph-container"></div>
-                    <div class="stabilization-overlay d-none" id="stabilizationOverlay">
+                    <div class="d-none w-100 h-100" id="site-graph-container" role="img" aria-label="خريطة بصرية تفاعلية لبنية الموقع — استخدم الماوس للتنقل والتكبير"></div>
+                    <div class="stabilization-overlay d-none" id="stabilizationOverlay" role="status" aria-live="polite">
                         <div class="stabilization-content">
                             <i class="bi bi-gear-wide-connected stabilization-icon" aria-hidden="true"></i>
                             <div class="stabilization-text">جاري بناء الخريطة...</div>
@@ -162,13 +162,13 @@
                                 </div>
                             </div>
                             <div class="col-6">
-                                <div class="stat-card stat-card--warning">
+                                <div class="stat-card stat-card--warning" role="status" aria-label="تحذير: صفحات يتيمة">
                                     <div class="stat-value" id="visualizer-orphan-pages">0</div>
                                     <div class="stat-label">صفحات يتيمة</div>
                                 </div>
                             </div>
                             <div class="col-6">
-                                <div class="stat-card stat-card--danger">
+                                <div class="stat-card stat-card--danger" role="status" aria-label="تنبيه: صفحات ممنوعة الفهرسة">
                                     <div class="stat-value" id="visualizer-noindex-pages">0</div>
                                     <div class="stat-label">ممنوعة الفهرسة</div>
                                 </div>
@@ -221,9 +221,9 @@
                         </div>
                     </div>
                     <div class="d-flex flex-column flex-grow-1" style="min-height:0;">
-                        <h3 class="flex-shrink-0 h6 mb-3">قائمة الصفحات (مرتبة بالأهمية)</h3><input class="form-control-sm flex-shrink-0 form-control mb-2" type="search" dir="rtl" id="visualizer-search" placeholder="ابحث عن صفحة...">
+                        <h3 class="flex-shrink-0 h6 mb-3">قائمة الصفحات (مرتبة بالأهمية)</h3><input class="form-control-sm flex-shrink-0 form-control mb-2" type="search" dir="rtl" id="visualizer-search" placeholder="ابحث عن صفحة..." aria-label="البحث في قائمة الصفحات">
                         <div id="visualizer-page-list-container">
-                            <ul class="list-group list-group-flush" id="visualizer-page-list"></ul>
+                            <ul class="list-group list-group-flush" id="visualizer-page-list" role="list" aria-label="قائمة صفحات الموقع مرتبة بعدد الروابط الواردة"></ul>
                         </div>
                     </div>
                 </div>
@@ -232,7 +232,7 @@
         <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:1100;">
             <div class="toast jello animated hide" role="alert" data-bs-animation="false" id="appToast" aria-live="assertive" aria-atomic="true">
                 <div class="toast-header"><i id="toast-icon" class="bi rounded ms-2"></i><strong class="mx-auto" id="toast-title"></strong><button class="btn-close ms-0" type="button" data-bs-dismiss="toast" aria-label="Close"></button></div>
-                <div class="toast-body" role="alert" id="toast-body"></div>
+                <div class="toast-body" id="toast-body"></div>
             </div>
         </div><div id="cluster-rule-template" class="d-none">
             <div class="input-group input-group-sm mb-2 cluster-rule-item">
