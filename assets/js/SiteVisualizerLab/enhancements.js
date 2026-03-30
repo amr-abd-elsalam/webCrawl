@@ -91,7 +91,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     'info',
                     'تم تقليص البيانات'
                 );
-                window.svl.renderFromProcessedData({ fullSearchIndex: trimmed, edges: filteredEdges });
+                window.svl.renderFromProcessedData({ fullSearchIndex: trimmed, edges: filteredEdges, communityStats: data.communityStats });
                 this.onGraphRendered();
                 return;
             }
@@ -106,7 +106,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 this.showToast('تمت معالجة البيانات بنجاح، جاري الآن رسم الخريطة.', 'success');
             }
 
-            window.svl.renderFromProcessedData(data);
+            window.svl.renderFromProcessedData({ fullSearchIndex: data.fullSearchIndex, edges: data.edges, communityStats: data.communityStats });
             this.onGraphRendered();
         },
 
@@ -163,8 +163,33 @@ document.addEventListener("DOMContentLoaded", function() {
                     </ul><p class="mb-0 mt-1 small text-muted">الرقم يمثل أهمية الصفحة كجسر بين أقسام الموقع. القيمة العالية = نقطة اختناق.</p>`;
                     break;
 
+                case 'community': {
+                    const stats = window.svl.communityStats;
+                    if (!stats) {
+                        legendHtml = '<p class="mb-0 small text-muted">لا توجد بيانات مجتمعات.</p>';
+                        break;
+                    }
+                    // Count pages per community
+                    const commCounts = {};
+                    (window.svl.fullSearchIndex || []).forEach(p => {
+                        const cId = p.seo?._computed?.communityId ?? 0;
+                        commCounts[cId] = (commCounts[cId] || 0) + 1;
+                    });
+                    // Sort by size descending
+                    const sorted = Object.entries(commCounts).sort((a, b) => b[1] - a[1]);
+                    let itemsHtml = sorted.map(([cId, count]) => {
+                        const color = window.svl.communityColors[cId] || '#cccccc';
+                        return `<div class="community-legend-item"><span class="legend-color-swatch" style="background-color: ${color};"></span>مجتمع ${parseInt(cId) + 1} (${count})</div>`;
+                    }).join('');
+
+                    const qualityLabel = stats.modularity >= 0.5 ? 'ممتاز' : stats.modularity >= 0.3 ? 'جيد' : 'ضعيف';
+                    legendHtml = `<div class="community-legend-grid">${itemsHtml}</div>
+                    <p class="mb-0 mt-2 small text-muted">تم اكتشاف <strong>${stats.count}</strong> مجتمع — جودة التقسيم (Modularity): <strong>${stats.modularity}</strong> (${qualityLabel}). المجتمعات تُكتشف تلقائياً بخوارزمية Louvain بناءً على بنية الروابط الفعلية.</p>`;
+                    break;
+                }
                 case 'linkEquity':
                 default:
+
                     legendHtml = `<ul>
                         ${createSwatch('#5bc0de', 'صفحة عادية')}
                         ${createSwatch('#f0ad4e', 'صفحة يتيمة')}
@@ -206,6 +231,16 @@ document.addEventListener("DOMContentLoaded", function() {
             const bcEl = document.getElementById('inspector-betweenness');
             if (prEl) prEl.textContent = computed.pageRankScore ?? 'N/A';
             if (bcEl) bcEl.textContent = computed.betweennessScore ?? 'N/A';
+
+            const communityEl = document.getElementById('inspector-community');
+            const communityDot = document.getElementById('inspector-community-dot');
+            if (communityEl) {
+                const cId = computed.communityId ?? 'N/A';
+                communityEl.textContent = typeof cId === 'number' ? 'مجتمع ' + (cId + 1) : 'N/A';
+                if (communityDot && typeof cId === 'number') {
+                    communityDot.style.backgroundColor = window.svl.communityColors?.[cId] || '#cccccc';
+                }
+            }
 
             // ── Build Inlinks list ──
             const inlinksItems = document.getElementById('inspector-inlinks-items');
