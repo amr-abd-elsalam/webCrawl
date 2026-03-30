@@ -123,11 +123,12 @@
                     </div>
                     <hr class="my-4">
                     <h3 class="h5">أدوات التحكم بالرسم</h3>
-                    <div class="d-grid gap-2 mb-2"><button class="btn btn-secondary d-none" id="toggleLabelsBtn" type="button"><i class="bi bi-chat-text ms-2"></i>إخفاء العناوين</button><button class="btn btn-outline-info d-none" id="togglePhysicsBtn" type="button"><i class="bi bi-activity ms-2"></i>إعادة تفعيل الحركة</button></div>
+                    <div class="d-grid gap-2 mb-2"><button class="btn btn-secondary d-none" id="toggleLabelsBtn" type="button" title="اختصار: L"><i class="bi bi-chat-text ms-2"></i>إخفاء العناوين</button><button class="btn btn-outline-info d-none" id="togglePhysicsBtn" type="button" title="اختصار: P"><i class="bi bi-activity ms-2"></i>إعادة تفعيل الحركة</button></div>
                     <div class="d-grid"><button class="btn btn-outline-secondary d-none" id="clusterGraphBtn" type="button"><i class="bi bi-grid-3x3-gap-fill ms-2"></i> تجميع العقد الكبيرة</button></div>
                 </div>
                 <div class="col-12 col-lg-6 visualizer-column position-relative">
-                    <h2 class="visually-hidden">الخريطة البصرية للموقع</h2><div class="position-absolute top-0 end-0 m-2 d-flex gap-1" style="z-index:10;"><button class="btn btn-dark btn-sm d-none" id="exportCsvBtn" title="تصدير البيانات كـ CSV"><i class="bi bi-filetype-csv"></i></button><button class="btn btn-dark btn-sm d-none" id="exportPngBtn" title="تصدير كصورة PNG"><i class="bi bi-download"></i></button><button class="btn btn-dark btn-sm d-none" id="fullscreenBtn" title="وضع ملء الشاشة"><i class="bi bi-arrows-fullscreen"></i></button></div>
+                    <h2 class="visually-hidden">الخريطة البصرية للموقع</h2><div class="position-absolute top-0 end-0 m-2 d-flex gap-1" style="z-index:10;"><button class="btn btn-dark btn-sm d-none" id="exportCsvBtn" title="تصدير البيانات كـ CSV" aria-label="تصدير البيانات كـ CSV"><i class="bi bi-filetype-csv"></i></button><button class="btn btn-dark btn-sm d-none" id="exportPngBtn" title="تصدير كصورة PNG" aria-label="تصدير كصورة PNG"><i class="bi bi-download"></i></button><button class="btn btn-dark btn-sm d-none" id="fullscreenBtn" title="وضع ملء الشاشة (F)" aria-label="وضع ملء الشاشة"><i class="bi bi-arrows-fullscreen"></i></button>
+                    </div>
                     <div class="d-none w-100 h-100" id="site-graph-container"></div>
                     <div class="stabilization-overlay d-none" id="stabilizationOverlay">
                         <div class="stabilization-content">
