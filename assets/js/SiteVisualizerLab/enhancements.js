@@ -73,6 +73,42 @@ document.addEventListener("DOMContentLoaded", function() {
                 dom.loadSampleDataBtn.disabled = false;
             }
         },
+            handleProcessedData(data, pageCount) {
+            const WARN_THRESHOLD = 500;
+            const HARD_LIMIT = 2000;
+
+            if (pageCount > HARD_LIMIT) {
+                // Trim to top pages by internalLinkEquity
+                const trimmed = [...data.fullSearchIndex]
+                    .sort((a, b) => (b.seo?.internalLinkEquity || 0) - (a.seo?.internalLinkEquity || 0))
+                    .slice(0, HARD_LIMIT);
+                
+                const keptUrls = new Set(trimmed.map(p => p.url));
+                const filteredEdges = data.edges.filter(e => keptUrls.has(e.from) && keptUrls.has(e.to));
+
+                this.showToast(
+                    `الموقع يحتوي ${pageCount} صفحة. تم عرض أهم ${HARD_LIMIT} صفحة لضمان أداء سلس. للتحليل الكامل، استخدم طبقة المجموعات لتصفية الأقسام.`,
+                    'info',
+                    'تم تقليص البيانات'
+                );
+                window.svl.renderFromProcessedData({ fullSearchIndex: trimmed, edges: filteredEdges });
+                this.onGraphRendered();
+                return;
+            }
+
+            if (pageCount > WARN_THRESHOLD) {
+                this.showToast(
+                    `${pageCount} صفحة — قد يستغرق الرسم بضع ثوانٍ. سيتم تفعيل التجميع تلقائياً لتحسين الأداء.`,
+                    'info',
+                    'موقع كبير'
+                );
+            } else {
+                this.showToast('تمت معالجة البيانات بنجاح، جاري الآن رسم الخريطة.', 'success');
+            }
+
+            window.svl.renderFromProcessedData(data);
+            this.onGraphRendered();
+        },
 
         processWithWorker(fileContent, fileType) {
             if (!fileContent) {
@@ -289,11 +325,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 visualizerWorker = new Worker('../assets/js/SiteVisualizerLab/visualizer-worker.js');
                 visualizerWorker.onmessage = (e) => {
                     this.setLoadingState(false);
-                    const { status, data, message } = e.data;
+                    const { status, data, message, pageCount } = e.data;
                     if (status === 'success') {
-                        this.showToast('تمت معالجة البيانات بنجاح، جاري الآن رسم الخريطة.', 'success');
-                        window.svl.renderFromProcessedData(data);
-                        this.onGraphRendered();
+                        this.handleProcessedData(data, pageCount);
                     } else {
                         this.showToast(message, 'error');
                     }
