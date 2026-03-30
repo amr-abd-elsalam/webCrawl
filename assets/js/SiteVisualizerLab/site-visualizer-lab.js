@@ -35,6 +35,9 @@ document.addEventListener("DOMContentLoaded", function() {
         clusterGraphBtn: document.getElementById('clusterGraphBtn'),
         exportPngBtn: document.getElementById('exportPngBtn'),
         exportCsvBtn: document.getElementById('exportCsvBtn'),
+        stabilizationOverlay: document.getElementById('stabilizationOverlay'),
+        stabilizationBar: document.getElementById('stabilizationBar'),
+        stabilizationPercent: document.getElementById('stabilizationPercent'),
     };
 
     function sanitizeHTML(str) {
@@ -407,8 +410,24 @@ document.addEventListener("DOMContentLoaded", function() {
             interaction: { tooltipDelay: 200, hideEdgesOnDrag: true, navigationButtons: true, selectConnectedEdges: false },
         };
         window.svl.network = new vis.Network(dom.graphContainer, { nodes: window.svl.currentNodes, edges: window.svl.currentEdges }, options);
-        
+
+        // ── Stabilization progress ──
+        dom.stabilizationOverlay.classList.remove('d-none', 'fade-out');
+        dom.stabilizationBar.style.width = '0%';
+        dom.stabilizationPercent.textContent = '0%';
+
+        window.svl.network.on("stabilizationProgress", (params) => {
+            const pct = Math.round((params.iterations / params.total) * 100);
+            dom.stabilizationBar.style.width = pct + '%';
+            dom.stabilizationPercent.textContent = pct + '%';
+        });
+
         window.svl.network.on("stabilizationIterationsDone", () => {
+            dom.stabilizationBar.style.width = '100%';
+            dom.stabilizationPercent.textContent = '100%';
+            dom.stabilizationOverlay.classList.add('fade-out');
+            setTimeout(() => dom.stabilizationOverlay.classList.add('d-none'), 450);
+
             window.svl.network.setOptions({ physics: false });
             window.svl.isPhysicsEnabled = false;
             dom.togglePhysicsBtn.innerHTML = '<i class="bi bi-activity ms-2"></i>إعادة تفعيل الحركة';
