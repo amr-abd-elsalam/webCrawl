@@ -35,6 +35,7 @@ document.addEventListener("DOMContentLoaded", function() {
         clusterGraphBtn: document.getElementById('clusterGraphBtn'),
         exportPngBtn: document.getElementById('exportPngBtn'),
         exportCsvBtn: document.getElementById('exportCsvBtn'),
+        exportGexfBtn: document.getElementById('exportGexfBtn'),
         stabilizationOverlay: document.getElementById('stabilizationOverlay'),
         stabilizationBar: document.getElementById('stabilizationBar'),
         stabilizationPercent: document.getElementById('stabilizationPercent'),
@@ -210,6 +211,7 @@ document.addEventListener("DOMContentLoaded", function() {
         dom.fullscreenBtn.classList.add('d-none');
         dom.exportPngBtn.classList.add('d-none');
         dom.exportCsvBtn.classList.add('d-none');
+        dom.exportGexfBtn.classList.add('d-none');
         dom.clusterGraphBtn.classList.add('d-none');
 
         document.getElementById('visualizer-page-list').innerHTML = '';
@@ -236,6 +238,7 @@ document.addEventListener("DOMContentLoaded", function() {
             dom.fullscreenBtn.classList.remove('d-none');
             dom.exportPngBtn.classList.remove('d-none');
             dom.exportCsvBtn.classList.remove('d-none');
+            dom.exportGexfBtn.classList.remove('d-none');
 
             dom.viewModeButtons.forEach(btn => btn.classList.remove('active'));
             document.querySelector('[data-view-mode="linkEquity"]').classList.add('active');
@@ -591,6 +594,74 @@ document.addEventListener("DOMContentLoaded", function() {
                 window.showToast?.('تم تصدير البيانات بنجاح.', 'success');
             } catch (e) {
                 console.error('CSV Export error:', e);
+                window.showToast?.('فشل التصدير: ' + e.message, 'error');
+            }
+        });
+
+                dom.exportGexfBtn.addEventListener('click', () => {
+            if (!window.svl.fullSearchIndex || window.svl.fullSearchIndex.length === 0) {
+                window.showToast?.('لا توجد بيانات للتصدير.', 'error');
+                return;
+            }
+            try {
+                const esc = (str) => String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                const pages = window.svl.fullSearchIndex;
+                const edges = window.svl.currentEdges ? window.svl.currentEdges.get() : [];
+
+                let nodesXml = '';
+                for (const page of pages) {
+                    const seo = page.seo || {};
+                    const computed = seo._computed || {};
+                    nodesXml += `      <node id="${esc(page.url)}" label="${esc(page.title || page.url)}">\n`;
+                    nodesXml += `        <attvalues>\n`;
+                    nodesXml += `          <attvalue for="0" value="${seo.crawlDepth ?? 0}"/>\n`;
+                    nodesXml += `          <attvalue for="1" value="${seo.internalLinkEquity || 0}"/>\n`;
+                    nodesXml += `          <attvalue for="2" value="${seo.contentAnalysis?.outgoingInternalLinks?.length || 0}"/>\n`;
+                    nodesXml += `          <attvalue for="3" value="${seo.isOrphan ? 'true' : 'false'}"/>\n`;
+                    nodesXml += `          <attvalue for="4" value="${seo.isNoIndex ? 'true' : 'false'}"/>\n`;
+                    nodesXml += `          <attvalue for="5" value="${computed.pageRankScore ?? 0}"/>\n`;
+                    nodesXml += `          <attvalue for="6" value="${computed.betweennessScore ?? 0}"/>\n`;
+                    nodesXml += `        </attvalues>\n`;
+                    nodesXml += `      </node>\n`;
+                }
+
+                let edgesXml = '';
+                edges.forEach((edge, i) => {
+                    const weight = edge.value || 1;
+                    const type = edge.arrows?.from?.enabled ? 'Bidirectional' : 'Directed';
+                    edgesXml += `      <edge id="${i}" source="${esc(edge.from)}" target="${esc(edge.to)}" weight="${weight}" label="${esc(type)}" />\n`;
+                });
+
+                const gexf = `<?xml version="1.0" encoding="UTF-8"?>
+                    <gexf xmlns="http://gexf.net/1.3" version="1.3">
+                    <meta lastmodifieddate="${new Date().toISOString().slice(0, 10)}">
+                        <creator>Ai8V | Mind &amp; Machine — Site Visualizer Lab</creator>
+                        <description>Site structure graph exported for Gephi analysis</description>
+                    </meta>
+                    <graph defaultedgetype="directed" mode="static">
+                        <attributes class="node" mode="static">
+                        <attribute id="0" title="Crawl Depth" type="integer"/>
+                        <attribute id="1" title="Inlinks" type="integer"/>
+                        <attribute id="2" title="Outlinks" type="integer"/>
+                        <attribute id="3" title="Is Orphan" type="boolean"/>
+                        <attribute id="4" title="Is NoIndex" type="boolean"/>
+                        <attribute id="5" title="PageRank Score" type="integer"/>
+                        <attribute id="6" title="Betweenness Score" type="integer"/>
+                        </attributes>
+                        <nodes>\n${nodesXml}    </nodes>
+                        <edges>\n${edgesXml}    </edges>
+                    </graph>
+                    </gexf>`;
+
+                const blob = new Blob([gexf], { type: 'application/gexf+xml;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.download = `site-structure-${new Date().toISOString().slice(0, 10)}.gexf`;
+                link.href = URL.createObjectURL(blob);
+                link.click();
+                URL.revokeObjectURL(link.href);
+                window.showToast?.('تم تصدير ملف GEXF بنجاح — افتحه في Gephi.', 'success');
+            } catch (e) {
+                console.error('GEXF Export error:', e);
                 window.showToast?.('فشل التصدير: ' + e.message, 'error');
             }
         });
