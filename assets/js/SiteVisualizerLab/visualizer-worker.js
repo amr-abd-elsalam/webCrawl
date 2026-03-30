@@ -294,6 +294,162 @@ function normalizeToScore(values) {
     return scores;
 }
 
+// --- Community Detection: Louvain Algorithm ---
+
+function computeLouvain(searchIndex) {
+    const urls = searchIndex.map(p => p.url);
+    const N = urls.length;
+    if (N < 2) {
+        const communities = {};
+        urls.forEach(u => { communities[u] = 0; });
+        return { communities, modularity: 0, count: 1 };
+    }
+
+    const urlToIdx = new Map();
+    urls.forEach((u, i) => { urlToIdx.set(u, i); });
+
+    // Build undirected weighted adjacency
+    const adj = new Array(N);
+    for (let i = 0; i < N; i++) adj[i] = {};
+
+    let totalWeight = 0;
+    searchIndex.forEach(page => {
+        const i = urlToIdx.get(page.url);
+        (page.seo?.contentAnalysis?.outgoingInternalLinks || []).forEach(target => {
+            const j = urlToIdx.get(target);
+            if (j === undefined || j === i) return;
+            // Undirected: add weight in both directions
+            if (!adj[i][j]) { adj[i][j] = 0; adj[j][i] = 0; }
+            adj[i][j] += 1;
+            adj[j][i] += 1;
+            totalWeight += 1;
+        });
+    });
+
+    const m = totalWeight; // total edge weight (each directed link counted once)
+    if (m === 0) {
+        const communities = {};
+        urls.forEach(u => { communities[u] = 0; });
+        return { communities, modularity: 0, count: 1 };
+    }
+
+    // Degree of each node (sum of weights)
+    const deg = new Array(N);
+    for (let i = 0; i < N; i++) {
+        let s = 0;
+        for (const j in adj[i]) s += adj[i][j];
+        deg[i] = s;
+    }
+
+    // Initialize: each node in its own community
+    const comm = new Array(N);
+    for (let i = 0; i < N; i++) comm[i] = i;
+
+    // Sum of weights inside each community, sum of degrees
+    const commInternalWeight = new Float64Array(N); // sigma_in
+    const commTotalDeg = new Float64Array(N);       // sigma_tot
+    for (let i = 0; i < N; i++) {
+        commInternalWeight[i] = 0;
+        commTotalDeg[i] = deg[i];
+    }
+
+    const m2 = 2 * m;
+
+    // Phase 1: Local moving — iterate until no improvement
+    let improved = true;
+    let iterations = 0;
+    const MAX_ITERATIONS = 20;
+
+    while (improved && iterations < MAX_ITERATIONS) {
+        improved = false;
+        iterations++;
+
+        for (let i = 0; i < N; i++) {
+            const currentComm = comm[i];
+            const ki = deg[i];
+
+            // Remove i from its community
+            commTotalDeg[currentComm] -= ki;
+            let selfLinkWeight = 0;
+            for (const jStr in adj[i]) {
+                const j = parseInt(jStr);
+                if (comm[j] === currentComm) {
+                    commInternalWeight[currentComm] -= adj[i][j];
+                }
+                if (j === i) selfLinkWeight = adj[i][j];
+            }
+
+            // Compute weight to each neighboring community
+            const neighborComms = {};
+            for (const jStr in adj[i]) {
+                const j = parseInt(jStr);
+                const c = comm[j];
+                if (!neighborComms[c]) neighborComms[c] = 0;
+                neighborComms[c] += adj[i][j];
+            }
+
+            // Find best community
+            let bestComm = currentComm;
+            let bestDeltaQ = 0;
+            const kiOverM2 = ki / m2;
+
+            // Check current community as baseline
+            const wCurrentComm = neighborComms[currentComm] || 0;
+            // deltaQ for staying = 0 (baseline)
+
+            for (const cStr in neighborComms) {
+                const c = parseInt(cStr);
+                const wc = neighborComms[c];
+                // Modularity gain of moving i to community c vs leaving it unassigned
+                const deltaQ = (wc / m) - (commTotalDeg[c] * kiOverM2 / m);
+                const deltaQCurrent = (wCurrentComm / m) - (commTotalDeg[currentComm] * kiOverM2 / m);
+                if (deltaQ - deltaQCurrent > bestDeltaQ) {
+                    bestDeltaQ = deltaQ - deltaQCurrent;
+                    bestComm = c;
+                }
+            }
+
+            // Assign to best community
+            comm[i] = bestComm;
+            commTotalDeg[bestComm] += ki;
+            for (const jStr in adj[i]) {
+                const j = parseInt(jStr);
+                if (comm[j] === bestComm) {
+                    commInternalWeight[bestComm] += adj[i][j];
+                }
+            }
+
+            if (bestComm !== currentComm) improved = true;
+        }
+    }
+
+    // Renumber communities to 0, 1, 2, ...
+    const uniqueComms = [...new Set(comm)];
+    const commMap = {};
+    uniqueComms.forEach((c, idx) => { commMap[c] = idx; });
+
+    const communities = {};
+    urls.forEach((u, i) => { communities[u] = commMap[comm[i]]; });
+
+    // Compute modularity Q
+    let Q = 0;
+    for (let i = 0; i < N; i++) {
+        for (const jStr in adj[i]) {
+            const j = parseInt(jStr);
+            if (comm[i] === comm[j]) {
+                Q += adj[i][j] - (deg[i] * deg[j] / m2);
+            }
+        }
+    }
+    Q /= m2;
+
+    return {
+        communities,
+        modularity: Math.round(Q * 1000) / 1000,
+        count: uniqueComms.length
+    };
+}
+
 // --- Main Data Processing Logic ---
 function processData(jsonDataString) {
     const data = JSON.parse(jsonDataString);
@@ -366,6 +522,9 @@ function processData(jsonDataString) {
     const betweennessRaw = computeBetweenness(fullSearchIndex, edgeMap);
     const betweennessScores = normalizeToScore(betweennessRaw);
 
+    // --- Community Detection ---
+    const louvainResult = computeLouvain(fullSearchIndex);
+
     // Attach computed metrics to each page
     fullSearchIndex.forEach(page => {
         if (!page.seo) page.seo = {};
@@ -374,10 +533,18 @@ function processData(jsonDataString) {
             pageRankScore: pageRankScores[page.url] || 0,
             betweenness: betweennessRaw[page.url] || 0,
             betweennessScore: betweennessScores[page.url] || 0,
+            communityId: louvainResult.communities[page.url] ?? 0,
         };
     });
 
-    return { fullSearchIndex, edges };
+    return {
+        fullSearchIndex,
+        edges,
+        communityStats: {
+            count: louvainResult.count,
+            modularity: louvainResult.modularity,
+        }
+    };
 }
 
 
