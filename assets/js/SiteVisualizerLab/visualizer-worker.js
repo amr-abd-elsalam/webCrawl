@@ -215,7 +215,8 @@ self.onmessage = function(e) {
         
         self.postMessage({
             status: 'success',
-            data: processedData
+            data: processedData,
+            pageCount: processedData.fullSearchIndex.length
         });
 
     } catch (err) {
