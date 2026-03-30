@@ -160,3 +160,69 @@ body.fullscreen-mode .visualizer-column {
 .cluster-rule-item .form-control-color {
   max-width: 50px;
 }
+
+
+/* ─────────────────────────────────────────
+   STATS DASHBOARD
+───────────────────────────────────────── */
+
+.stat-card {
+    background: var(--bg-elevated, #0f1a11);
+    border: 1px solid var(--border-subtle, rgba(67, 160, 71, 0.15));
+    border-radius: var(--radius-sm, 8px);
+    padding: 0.6rem 0.75rem;
+    text-align: center;
+    transition: border-color 0.15s ease;
+}
+
+.stat-card:hover {
+    border-color: var(--border-glow, rgba(67, 160, 71, 0.3));
+}
+
+.stat-value {
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--em-400, #43a047);
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted, #98b39b);
+    margin-top: 0.15rem;
+    letter-spacing: 0.02em;
+}
+
+.stat-card--warning .stat-value {
+    color: #f0ad4e;
+}
+
+.stat-card--warning {
+    border-color: rgba(240, 173, 78, 0.2);
+}
+
+.stat-card--danger .stat-value {
+    color: #d9534f;
+}
+
+.stat-card--danger {
+    border-color: rgba(217, 83, 79, 0.2);
+}
+
+#stats-insights {
+    font-size: 0.78rem;
+    line-height: 1.5;
+}
+
+#stats-insights .insight-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    padding: 0.35rem 0;
+}
+
+#stats-insights .insight-item i {
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+}
