@@ -30,6 +30,7 @@ document.addEventListener("DOMContentLoaded", function() {
         togglePhysicsBtn: document.getElementById('togglePhysicsBtn'),
         fullscreenBtn: document.getElementById('fullscreenBtn'),
         clusterGraphBtn: document.getElementById('clusterGraphBtn'),
+        exportPngBtn: document.getElementById('exportPngBtn'),
     };
 
     function sanitizeHTML(str) {
@@ -185,6 +186,7 @@ document.addEventListener("DOMContentLoaded", function() {
         dom.toggleLabelsBtn.classList.add('d-none');
         dom.togglePhysicsBtn.classList.add('d-none');
         dom.fullscreenBtn.classList.add('d-none');
+        dom.exportPngBtn.classList.add('d-none');
         dom.clusterGraphBtn.classList.add('d-none');
 
         document.getElementById('visualizer-page-list').innerHTML = '';
@@ -209,6 +211,7 @@ document.addEventListener("DOMContentLoaded", function() {
             dom.toggleLabelsBtn.classList.remove('d-none');
             dom.togglePhysicsBtn.classList.remove('d-none');
             dom.fullscreenBtn.classList.remove('d-none');
+            dom.exportPngBtn.classList.remove('d-none');
 
             dom.viewModeButtons.forEach(btn => btn.classList.remove('active'));
             document.querySelector('[data-view-mode="linkEquity"]').classList.add('active');
@@ -471,6 +474,45 @@ document.addEventListener("DOMContentLoaded", function() {
                 unclusterGraph();
             } else {
                 clusterGraph();
+            }
+        });
+        dom.exportPngBtn.addEventListener('click', () => {
+            if (!window.svl.network) return;
+            try {
+                const networkCanvas = dom.graphContainer.querySelector('canvas');
+                if (!networkCanvas) {
+                    window.showToast?.('لا يوجد رسم بياني للتصدير.', 'error');
+                    return;
+                }
+                // Create a new canvas with background
+                const exportCanvas = document.createElement('canvas');
+                exportCanvas.width = networkCanvas.width;
+                exportCanvas.height = networkCanvas.height;
+                const ctx = exportCanvas.getContext('2d');
+
+                // Fill background
+                const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+                ctx.fillStyle = isDark ? '#1a1d21' : '#ffffff';
+                ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+                // Draw the network canvas on top
+                ctx.drawImage(networkCanvas, 0, 0);
+
+                // Add watermark
+                ctx.font = '14px Tahoma';
+                ctx.fillStyle = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)';
+                ctx.textAlign = 'right';
+                ctx.fillText('Ai8V | Mind & Machine — Site Visualizer Lab', exportCanvas.width - 16, exportCanvas.height - 16);
+
+                // Download
+                const link = document.createElement('a');
+                link.download = `site-structure-${new Date().toISOString().slice(0, 10)}.png`;
+                link.href = exportCanvas.toDataURL('image/png');
+                link.click();
+                window.showToast?.('تم تصدير الخريطة بنجاح.', 'success');
+            } catch (e) {
+                console.error('Export error:', e);
+                window.showToast?.('فشل التصدير: ' + e.message, 'error');
             }
         });
 
