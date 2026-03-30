@@ -229,36 +229,55 @@ document.addEventListener("DOMContentLoaded", function() {
         },
 
         autoLoadFromSession() {
+            const MAX_AGE_MS = 60 * 60 * 1000; // 1 hour
             try {
-                const raw = sessionStorage.getItem('ai8v_crawl_data');
-                if (!raw || raw.length < 10) return; // No data or too short
+                const raw = localStorage.getItem('ai8v_crawl_data');
+                if (!raw || raw.length < 10) return;
 
-                const parsed = JSON.parse(raw);
+                const envelope = JSON.parse(raw);
 
-                if (!Array.isArray(parsed) || parsed.length === 0) {
-                    this.showToast('بيانات الجلسة غير صالحة — يرجى لصق البيانات يدوياً.', 'error', 'خطأ في التحميل التلقائي');
+                // ── Format v1: { version, timestamp, data[] } ──
+                if (envelope && envelope.version === 1 && Array.isArray(envelope.data)) {
+                    // Check expiry
+                    if (Date.now() - envelope.timestamp > MAX_AGE_MS) {
+                        localStorage.removeItem('ai8v_crawl_data');
+                        return;
+                    }
+                    const pages = envelope.data;
+                    if (pages.length === 0 || !pages[0].url || !pages[0].seo) {
+                        this.showToast('بيانات الجلسة لا تتوافق مع الصيغة المطلوبة.', 'error', 'خطأ في التحميل التلقائي');
+                        return;
+                    }
+                    const jsonString = JSON.stringify(pages, null, 2);
+                    dom.jsonInput.value = jsonString;
+                    this.showToast(
+                        `تم تحميل بيانات الزحف تلقائياً (${pages.length} صفحة). جارِ بناء الخريطة...`,
+                        'success',
+                        'تحميل تلقائي'
+                    );
+                    this.processWithWorker(jsonString, 'json');
                     return;
                 }
 
-                // Validate minimum schema: first item must have url and seo
-                const sample = parsed[0];
-                if (!sample.url || !sample.seo) {
-                    this.showToast('بيانات الجلسة لا تتوافق مع الصيغة المطلوبة.', 'error', 'خطأ في التحميل التلقائي');
+                // ── Legacy format: plain array (from old sessionStorage) ──
+                if (Array.isArray(envelope) && envelope.length > 0 && envelope[0].url) {
+                    const jsonString = JSON.stringify(envelope, null, 2);
+                    dom.jsonInput.value = jsonString;
+                    this.showToast(
+                        `تم تحميل بيانات الزحف تلقائياً (${envelope.length} صفحة). جارِ بناء الخريطة...`,
+                        'success',
+                        'تحميل تلقائي'
+                    );
+                    this.processWithWorker(jsonString, 'json');
+                    // Migrate to v1 format
+                    localStorage.setItem('ai8v_crawl_data', JSON.stringify({
+                        version: 1, timestamp: Date.now(), data: envelope,
+                    }));
                     return;
                 }
-
-                // Data looks valid — auto-load it
-                dom.jsonInput.value = raw;
-                this.showToast(
-                    `تم تحميل بيانات الزحف تلقائياً (${parsed.length} صفحة). جارِ بناء الخريطة...`,
-                    'success',
-                    'تحميل تلقائي'
-                );
-                this.processWithWorker(raw, 'json');
 
             } catch (e) {
-                // JSON.parse failed or other error — silently ignore
-                console.warn('Auto-load from sessionStorage failed:', e.message);
+                console.warn('Auto-load from localStorage failed:', e.message);
             }
         },
 
