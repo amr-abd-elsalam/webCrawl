@@ -47,9 +47,7 @@ main.container-fluid {
 }
 
 #visualizer-page-list-container {
-  flex-grow: 1;
-  min-height: 0;
-  overflow-y: auto;
+  min-height: 200px;
 }
 
 body.fullscreen-mode .control-column, body.fullscreen-mode #visualizer-sidebar, body.fullscreen-mode .navbar {
