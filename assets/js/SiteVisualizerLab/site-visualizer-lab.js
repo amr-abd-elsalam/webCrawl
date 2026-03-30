@@ -16,6 +16,9 @@ document.addEventListener("DOMContentLoaded", function() {
         originalNodeSettings: {},
         isPhysicsEnabled: true,
         isClustered: false,
+        _cachedMaxDepth: null,
+        _dimmedNodeIds: new Set(),
+        _hiddenEdgeIds: new Set(),
     };
 
     const dom = {
@@ -49,9 +52,15 @@ document.addEventListener("DOMContentLoaded", function() {
     const getDepthColor = (depth) => {
         if (depth === null || typeof depth === 'undefined') return '#cccccc';
         if (!window.svl.fullSearchIndex || window.svl.fullSearchIndex.length === 0) return '#cccccc';
-        const validDepths = window.svl.fullSearchIndex.map(p => p.seo?.crawlDepth).filter(d => typeof d === 'number');
-        if (validDepths.length === 0) return '#cccccc';
-        const maxDepth = Math.max(0, ...validDepths);
+        if (window.svl._cachedMaxDepth === null) {
+            let max = 0;
+            for (const p of window.svl.fullSearchIndex) {
+                const d = p.seo?.crawlDepth;
+                if (typeof d === 'number' && d > max) max = d;
+            }
+            window.svl._cachedMaxDepth = max;
+        }
+        const maxDepth = window.svl._cachedMaxDepth;
         if (depth === 0) return '#28a745';
         if (maxDepth <= 1) return '#0dcaf0';
         const percentage = depth / maxDepth;
@@ -181,7 +190,7 @@ document.addEventListener("DOMContentLoaded", function() {
             window.svl.network.destroy();
             window.svl.network = null;
         }
-        Object.assign(window.svl, { fullSearchIndex: [], originalNodeSettings: {}, isClustered: false });
+        Object.assign(window.svl, { fullSearchIndex: [], originalNodeSettings: {}, isClustered: false, _cachedMaxDepth: null, _dimmedNodeIds: new Set(), _hiddenEdgeIds: new Set() });
         
         dom.graphContainer.classList.add('d-none');
         dom.placeholder.classList.remove('d-none');
