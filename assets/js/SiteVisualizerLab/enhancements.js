@@ -31,6 +31,12 @@ document.addEventListener("DOMContentLoaded", function() {
             outlinks: document.getElementById('inspector-outlinks'),
             status: document.getElementById('inspector-status'),
         },
+        processing: {
+            overlay: document.getElementById('processingOverlay'),
+            bar: document.getElementById('processingBar'),
+            percent: document.getElementById('processingPercent'),
+            stageText: document.getElementById('processingStageText'),
+        },
         toast: {
             el: document.getElementById('appToast'),
             instance: null,
@@ -102,12 +108,40 @@ document.addEventListener("DOMContentLoaded", function() {
                     'info',
                     'موقع كبير'
                 );
-            } else {
-                this.showToast('تمت معالجة البيانات بنجاح، جاري الآن رسم الخريطة.', 'success');
             }
 
             window.svl.renderFromProcessedData({ fullSearchIndex: data.fullSearchIndex, edges: data.edges, communityStats: data.communityStats });
             this.onGraphRendered();
+        },
+
+        _stageLabels: {
+            csv: 'جاري تحويل ملف CSV...',
+            parse: 'جاري قراءة البيانات...',
+            edges: 'جاري بناء خريطة الروابط...',
+            pagerank: 'جاري حساب قوة الصفحات (PageRank)...',
+            betweenness: 'جاري تحليل الصفحات الجسرية...',
+            community: 'جاري اكتشاف المجتمعات (Louvain)...',
+            finalize: 'جاري تجهيز النتائج...',
+            done: 'اكتملت المعالجة!',
+        },
+
+        showProcessingProgress(stage, percent) {
+            const p = dom.processing;
+            if (!p.overlay) return;
+
+            if (stage === 'done') {
+                p.bar.style.width = '100%';
+                p.percent.textContent = '100%';
+                p.stageText.textContent = this._stageLabels.done;
+                p.overlay.classList.add('fade-out');
+                setTimeout(() => p.overlay.classList.add('d-none'), 350);
+                return;
+            }
+
+            p.overlay.classList.remove('d-none', 'fade-out');
+            p.bar.style.width = percent + '%';
+            p.percent.textContent = percent + '%';
+            p.stageText.textContent = this._stageLabels[stage] || 'جاري المعالجة...';
         },
 
         processWithWorker(fileContent, fileType) {
@@ -116,7 +150,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 return;
             }
             this.setLoadingState(true);
-            this.showToast('بدأت معالجة البيانات في الخلفية...', 'info', 'جاري العمل');
+            this.showProcessingProgress('parse', 0);
             visualizerWorker.postMessage({ fileContent, fileType });
         },
         
@@ -467,12 +501,18 @@ document.addEventListener("DOMContentLoaded", function() {
             try {
                 visualizerWorker = new Worker('../assets/js/SiteVisualizerLab/visualizer-worker.js');
                 visualizerWorker.onmessage = (e) => {
+                    const msg = e.data;
+                    if (msg.status === 'progress') {
+                        this.showProcessingProgress(msg.stage, msg.percent);
+                        return;
+                    }
                     this.setLoadingState(false);
-                    const { status, data, message, pageCount } = e.data;
-                    if (status === 'success') {
-                        this.handleProcessedData(data, pageCount);
+                    if (msg.status === 'success') {
+                        this.handleProcessedData(msg.data, msg.pageCount);
                     } else {
-                        this.showToast(message, 'error');
+                        // Hide processing overlay on error
+                        dom.processing.overlay?.classList.add('d-none');
+                        this.showToast(msg.message, 'error');
                     }
                 };
                 visualizerWorker.onerror = (e) => {
