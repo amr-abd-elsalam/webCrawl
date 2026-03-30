@@ -433,3 +433,10 @@ body.fullscreen-mode .visualizer-column {
   gap: 0.35rem;
   font-size: 0.78rem;
 }
+
+/* ── Zoom Controls Divider ── */
+
+.visualizer-column .vr {
+  align-self: stretch;
+  min-height: 0;
+}
