@@ -19,6 +19,8 @@ document.addEventListener("DOMContentLoaded", function() {
         _cachedMaxDepth: null,
         _dimmedNodeIds: new Set(),
         _hiddenEdgeIds: new Set(),
+        _hiddenNodes: [],
+        _ctxTargetNodeId: null,
     };
 
     const dom = {
@@ -39,6 +41,8 @@ document.addEventListener("DOMContentLoaded", function() {
         stabilizationOverlay: document.getElementById('stabilizationOverlay'),
         stabilizationBar: document.getElementById('stabilizationBar'),
         stabilizationPercent: document.getElementById('stabilizationPercent'),
+        contextMenu: document.getElementById('graphContextMenu'),
+        ctxHiddenCount: document.getElementById('ctxHiddenCount'),
     };
 
     function sanitizeHTML(str) {
@@ -202,7 +206,7 @@ document.addEventListener("DOMContentLoaded", function() {
             window.svl.network.destroy();
             window.svl.network = null;
         }
-        Object.assign(window.svl, { fullSearchIndex: [], originalNodeSettings: {}, isClustered: false, _cachedMaxDepth: null, _dimmedNodeIds: new Set(), _hiddenEdgeIds: new Set() });
+        Object.assign(window.svl, { fullSearchIndex: [], originalNodeSettings: {}, isClustered: false, _cachedMaxDepth: null, _dimmedNodeIds: new Set(), _hiddenEdgeIds: new Set(), _hiddenNodes: [], _ctxTargetNodeId: null });
         
         dom.graphContainer.classList.add('d-none');
         dom.placeholder.classList.remove('d-none');
@@ -714,6 +718,185 @@ document.addEventListener("DOMContentLoaded", function() {
             dom.fullscreenBtn.title = isFullscreen ? 'الخروج من وضع ملء الشاشة' : 'وضع ملء الشاشة';
             if (window.svl.network) setTimeout(() => window.svl.network.fit(), 300);
         });
+
+                // ── Context Menu ──
+        const ctxMenu = dom.contextMenu;
+
+        function hideContextMenu() {
+            ctxMenu.classList.add('d-none');
+            window.svl._ctxTargetNodeId = null;
+        }
+
+        function showContextMenu(x, y, nodeId) {
+            window.svl._ctxTargetNodeId = nodeId;
+
+            // Show/hide restore button
+            const restoreBtn = ctxMenu.querySelector('[data-action="restore"]');
+            if (window.svl._hiddenNodes.length > 0) {
+                restoreBtn.classList.remove('d-none');
+                dom.ctxHiddenCount.textContent = window.svl._hiddenNodes.length;
+            } else {
+                restoreBtn.classList.add('d-none');
+            }
+
+            ctxMenu.classList.remove('d-none');
+
+            // Position — keep menu inside viewport
+            const menuRect = ctxMenu.getBoundingClientRect();
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            let left = x;
+            let top = y;
+            if (left + menuRect.width > vw) left = vw - menuRect.width - 8;
+            if (top + menuRect.height > vh) top = vh - menuRect.height - 8;
+            if (left < 0) left = 8;
+            if (top < 0) top = 8;
+            ctxMenu.style.left = left + 'px';
+            ctxMenu.style.top = top + 'px';
+        }
+
+        // Close on outside click or Escape
+        document.addEventListener('click', (e) => {
+            if (!ctxMenu.contains(e.target)) hideContextMenu();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !ctxMenu.classList.contains('d-none')) {
+                hideContextMenu();
+            }
+        });
+
+        // Prevent default context menu on graph
+        dom.graphContainer.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (!window.svl.network) return;
+
+            const canvasRect = dom.graphContainer.querySelector('canvas')?.getBoundingClientRect();
+            if (!canvasRect) return;
+
+            const pointer = {
+                x: e.clientX - canvasRect.left,
+                y: e.clientY - canvasRect.top
+            };
+            const nodeId = window.svl.network.getNodeAt(pointer);
+
+            if (nodeId && !window.svl.network.isCluster(nodeId)) {
+                showContextMenu(e.clientX, e.clientY, nodeId);
+            } else {
+                hideContextMenu();
+            }
+        });
+
+        // Handle menu actions
+        ctxMenu.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+
+            const action = btn.dataset.action;
+            const nodeId = window.svl._ctxTargetNodeId;
+            hideContextMenu();
+
+            if (!nodeId && action !== 'restore') return;
+
+            switch (action) {
+                case 'open': {
+                    const page = window.svl.fullSearchIndex.find(p => p.url === nodeId);
+                    if (page) window.open(page.url, '_blank', 'noopener');
+                    break;
+                }
+                case 'focus': {
+                    window.svl.network.focus(nodeId, { scale: 1.5, animation: true });
+                    window.svl.network.selectNodes([nodeId]);
+                    window.enhancements?.onNodeSelection([nodeId]);
+                    break;
+                }
+                case 'inlinks': {
+                    // Find pages that link TO this node
+                    const incomingIds = new Set([nodeId]);
+                    window.svl.fullSearchIndex.forEach(p => {
+                        if ((p.seo?.contentAnalysis?.outgoingInternalLinks || []).includes(nodeId)) {
+                            incomingIds.add(p.url);
+                        }
+                    });
+                    _highlightSubset(nodeId, incomingIds);
+                    break;
+                }
+                case 'outlinks': {
+                    // Find pages this node links TO
+                    const page = window.svl.fullSearchIndex.find(p => p.url === nodeId);
+                    const outgoingIds = new Set([nodeId]);
+                    if (page) {
+                        (page.seo?.contentAnalysis?.outgoingInternalLinks || []).forEach(url => {
+                            if (window.svl.currentNodes.get(url)) outgoingIds.add(url);
+                        });
+                    }
+                    _highlightSubset(nodeId, outgoingIds);
+                    break;
+                }
+                case 'hide': {
+                    if (!window.svl.currentNodes.get(nodeId)) break;
+                    const nodeData = window.svl.currentNodes.get(nodeId);
+                    const connEdges = window.svl.network.getConnectedEdges(nodeId).map(eid => window.svl.currentEdges.get(eid)).filter(Boolean);
+                    window.svl._hiddenNodes.push({ node: nodeData, edges: connEdges });
+                    window.svl.currentNodes.remove(nodeId);
+                    window.svl.network.unselectAll();
+                    window.enhancements?.onNodeSelection([]);
+                    window.showToast?.('تم إخفاء العقدة. انقر يمين لإعادة العقد المخفية.', 'info', 'إخفاء');
+                    break;
+                }
+                case 'restore': {
+                    const hidden = window.svl._hiddenNodes;
+                    if (hidden.length === 0) break;
+                    const nodesToAdd = hidden.map(h => h.node);
+                    const edgesToAdd = hidden.flatMap(h => h.edges);
+                    window.svl.currentNodes.add(nodesToAdd);
+                    // Only re-add edges whose both endpoints exist
+                    const existingIds = new Set(window.svl.currentNodes.getIds());
+                    const validEdges = edgesToAdd.filter(e => existingIds.has(e.from) && existingIds.has(e.to));
+                    const currentEdgeIds = new Set(window.svl.currentEdges.getIds());
+                    const newEdges = validEdges.filter(e => !currentEdgeIds.has(e.id));
+                    if (newEdges.length > 0) window.svl.currentEdges.add(newEdges);
+                    window.svl._hiddenNodes = [];
+                    window.showToast?.('تم إعادة جميع العقد المخفية.', 'success');
+                    break;
+                }
+            }
+        });
+
+        function _highlightSubset(centerId, visibleIds) {
+            if (!window.svl.currentNodes) return;
+            const dimColor = 'rgba(200, 200, 200, 0.1)';
+            const dimBorder = 'rgba(200,200,200,0.2)';
+            const nodesToUpdate = [];
+            const newDimmed = new Set();
+
+            for (const id of window.svl.currentNodes.getIds()) {
+                const orig = window.svl.originalNodeSettings[id];
+                if (!orig) continue;
+                if (visibleIds.has(id)) {
+                    nodesToUpdate.push({ id, color: orig.color, font: window.svl.areLabelsVisible ? orig.font : { size: 0 } });
+                } else {
+                    newDimmed.add(id);
+                    nodesToUpdate.push({ id, color: { background: dimColor, border: dimBorder }, font: { color: dimColor, strokeWidth: 0 } });
+                }
+            }
+            window.svl.currentNodes.update(nodesToUpdate);
+
+            // Hide edges not connecting visible nodes
+            const edgesToUpdate = [];
+            const newHidden = new Set();
+            for (const edge of window.svl.currentEdges.get()) {
+                const shouldHide = !(visibleIds.has(edge.from) && visibleIds.has(edge.to));
+                if (shouldHide) newHidden.add(edge.id);
+                edgesToUpdate.push({ id: edge.id, hidden: shouldHide });
+            }
+            window.svl.currentEdges.update(edgesToUpdate);
+
+            window.svl._dimmedNodeIds = newDimmed;
+            window.svl._hiddenEdgeIds = newHidden;
+
+            window.svl.network.selectNodes([centerId]);
+            window.svl.network.focus(centerId, { scale: 1.0, animation: true });
+        }
 
         // ── Keyboard Shortcuts ──
         document.addEventListener('keydown', (e) => {
