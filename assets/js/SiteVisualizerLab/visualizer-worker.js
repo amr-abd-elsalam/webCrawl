@@ -450,15 +450,18 @@ function computeLouvain(searchIndex) {
     };
 }
 
-// --- Main Data Processing Logic ---
+// --- Main Data Processing Logic (with progress reporting) ---
 function processData(jsonDataString) {
+    // ── Stage 1: Parse ──
+    self.postMessage({ status: 'progress', stage: 'parse', percent: 5 });
     const data = JSON.parse(jsonDataString);
     if (!Array.isArray(data) || data.length === 0) throw new Error("بيانات JSON غير صالحة أو فارغة.");
 
     const fullSearchIndex = data.filter(item => item && item.url);
     if (fullSearchIndex.length === 0) throw new Error("لم يتم العثور على صفحات صالحة (تحتوي على url) في البيانات.");
 
-    // Edge creation logic — direction-aware aggregation
+    // ── Stage 2: Build Edges ──
+    self.postMessage({ status: 'progress', stage: 'edges', percent: 15 });
     const pageUrls = new Set(fullSearchIndex.map(p => p.url));
     const edgeMap = {};
 
@@ -466,7 +469,6 @@ function processData(jsonDataString) {
         (sourcePage.seo?.contentAnalysis?.outgoingInternalLinks || []).forEach(targetUrl => {
             if (!pageUrls.has(targetUrl) || sourcePage.url === targetUrl) return;
 
-            // Canonical key: always store with the alphabetically-first URL as "nodeA"
             const [nodeA, nodeB] = [sourcePage.url, targetUrl].sort();
             const key = nodeA + '|' + nodeB;
 
@@ -474,7 +476,6 @@ function processData(jsonDataString) {
                 edgeMap[key] = { nodeA, nodeB, forwardCount: 0, reverseCount: 0 };
             }
 
-            // "forward" = nodeA → nodeB, "reverse" = nodeB → nodeA
             if (sourcePage.url === nodeA) {
                 edgeMap[key].forwardCount++;
             } else {
@@ -487,14 +488,13 @@ function processData(jsonDataString) {
         const totalWeight = e.forwardCount + e.reverseCount;
         const isBidirectional = e.forwardCount > 0 && e.reverseCount > 0;
 
-        // Set from/to so the arrow points in the correct direction for one-way links
         let from, to;
         if (e.forwardCount > 0 && e.reverseCount === 0) {
-            from = e.nodeA; to = e.nodeB;       // A → B only
+            from = e.nodeA; to = e.nodeB;
         } else if (e.forwardCount === 0 && e.reverseCount > 0) {
-            from = e.nodeB; to = e.nodeA;       // B → A only
+            from = e.nodeB; to = e.nodeA;
         } else {
-            from = e.nodeA; to = e.nodeB;       // bidirectional — direction doesn't matter
+            from = e.nodeA; to = e.nodeB;
         }
 
         let title;
@@ -515,17 +515,23 @@ function processData(jsonDataString) {
             }
         };
     });
-    
-    // --- Compute graph analysis metrics ---
+
+    // ── Stage 3: PageRank ──
+    self.postMessage({ status: 'progress', stage: 'pagerank', percent: 35 });
     const pageRankRaw = computePageRank(fullSearchIndex, edgeMap);
     const pageRankScores = normalizeToScore(pageRankRaw);
+
+    // ── Stage 4: Betweenness Centrality ──
+    self.postMessage({ status: 'progress', stage: 'betweenness', percent: 55 });
     const betweennessRaw = computeBetweenness(fullSearchIndex, edgeMap);
     const betweennessScores = normalizeToScore(betweennessRaw);
 
-    // --- Community Detection ---
+    // ── Stage 5: Community Detection ──
+    self.postMessage({ status: 'progress', stage: 'community', percent: 80 });
     const louvainResult = computeLouvain(fullSearchIndex);
 
-    // Attach computed metrics to each page
+    // ── Stage 6: Attach metrics ──
+    self.postMessage({ status: 'progress', stage: 'finalize', percent: 95 });
     fullSearchIndex.forEach(page => {
         if (!page.seo) page.seo = {};
         page.seo._computed = {
@@ -555,10 +561,13 @@ self.onmessage = function(e) {
     try {
         let jsonDataString = fileContent;
         if (fileType === 'csv') {
+            self.postMessage({ status: 'progress', stage: 'csv', percent: 2 });
             jsonDataString = convertCsvToAi8V(fileContent);
         }
         
         const processedData = processData(jsonDataString);
+
+        self.postMessage({ status: 'progress', stage: 'done', percent: 100 });
         
         self.postMessage({
             status: 'success',
