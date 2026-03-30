@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /webCrawl/LogFileAnalyzer/sample-log-file.log.txt
+
+Sitemap: https://amr-abd-elsalam.github.io/webCrawl/sitemap.xml

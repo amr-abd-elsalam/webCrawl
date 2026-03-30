@@ -1,0 +1,25 @@
+{
+  "short_name": "Ai8V Tools",
+  "name": "Ai8V | Mind & Machine — SEO Tools",
+  "description": "أدوات تحليل SEO وفحص صحة المواقع من Ai8V",
+  "icons": [
+    {
+      "src": "assets/img/fav192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/img/fav512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./",
+  "display": "standalone",
+  "theme_color": "#070d08",
+  "background_color": "#070d08",
+  "lang": "ar",
+  "dir": "rtl"
+}

@@ -1,0 +1,459 @@
+/* ═══════════════════════════════════════════════════════════════
+   crawler-app.css — Styles for the SEO Crawler Tool pages
+   Depends on: courses.css (variables)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ───────────────────────────────────────────
+   NAVBAR (reuse brand identity)
+─────────────────────────────────────────── */
+
+.home-navbar {
+  background-color: rgba(7, 13, 8, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.75rem 0;
+}
+
+.home-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-primary) !important;
+}
+
+.brand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+}
+
+.brand-logo {
+  width: 2rem;
+  height: 2rem;
+  object-fit: contain;
+}
+
+.home-navbar .nav-link {
+  color: var(--text-secondary) !important;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 0.4rem 0.75rem !important;
+  border-radius: 6px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.home-navbar .nav-link:hover,
+.home-navbar .nav-link.site-nav-active {
+  color: var(--em-400) !important;
+  background-color: var(--bg-elevated);
+}
+
+.home-navbar .navbar-toggler {
+  border: 1px solid var(--border-subtle);
+  padding: 0.4rem 0.6rem;
+}
+
+.home-navbar .navbar-toggler:hover {
+  border-color: var(--border-glow);
+}
+
+.icon-em-500 {
+  color: var(--em-500);
+}
+
+/* ───────────────────────────────────────────
+   CRAWLER TOOL CARD
+─────────────────────────────────────────── */
+
+.crawler-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.crawler-card .card-body {
+  padding: 2rem 2.5rem;
+}
+
+.crawler-icon {
+  font-size: 4rem;
+  color: var(--em-400);
+}
+
+.crawler-card h1 {
+  color: var(--text-primary);
+  font-weight: 800;
+}
+
+.crawler-card .lead {
+  color: var(--text-muted);
+}
+
+.crawler-card .form-control {
+  background: var(--bg-input, var(--bg-deep));
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-family: var(--font-base);
+}
+
+.crawler-card .form-control:focus {
+  border-color: var(--em-400);
+  box-shadow: 0 0 0 0.2rem rgba(67, 160, 71, 0.15);
+}
+
+.crawler-card .form-control::placeholder {
+  color: var(--text-muted);
+}
+
+.crawler-card .form-text {
+  color: var(--text-muted);
+}
+
+/* Advanced settings box */
+.crawler-settings {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.crawler-settings h2 {
+  color: var(--text-primary);
+}
+
+.crawler-settings .form-label {
+  color: var(--text-secondary);
+}
+
+/* ───────────────────────────────────────────
+   BUTTONS (brand gradient)
+─────────────────────────────────────────── */
+
+.btn-primary,
+#startCrawlBtn {
+  background: linear-gradient(135deg, var(--em-600) 0%, var(--teal-600) 100%) !important;
+  border: none !important;
+  color: #fff !important;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 20px rgba(46, 125, 50, 0.25);
+}
+
+.btn-primary:hover,
+#startCrawlBtn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 28px rgba(46, 125, 50, 0.35);
+}
+
+.btn-success {
+  background: #25D366 !important;
+  border: none !important;
+  color: #fff !important;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+.btn-secondary {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-secondary) !important;
+  font-weight: 500;
+  border-radius: 10px;
+}
+
+.btn-secondary:hover {
+  border-color: var(--em-700) !important;
+  color: var(--em-400) !important;
+}
+
+/* ───────────────────────────────────────────
+   PROGRESS BAR
+─────────────────────────────────────────── */
+
+.progress {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, var(--em-600), var(--teal-600)) !important;
+}
+
+/* ───────────────────────────────────────────
+   RESULTS TABLE
+─────────────────────────────────────────── */
+
+.table {
+  color: var(--text-primary);
+}
+
+.table thead th {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+  background-color: rgba(15, 26, 17, 0.5);
+}
+
+.table-hover > tbody > tr:hover {
+  background-color: var(--bg-hover);
+}
+
+.table td {
+  border-color: var(--border-subtle);
+  vertical-align: middle;
+  font-size: 0.88rem;
+}
+
+.table a {
+  color: var(--em-400);
+  text-decoration: none;
+}
+
+.table a:hover {
+  color: var(--em-300);
+  text-decoration: underline;
+}
+
+/* Severity badges */
+.badge.bg-danger {
+  background: rgba(239, 83, 80, 0.15) !important;
+  color: #ef5350 !important;
+  border: 1px solid rgba(239, 83, 80, 0.3);
+  font-weight: 600;
+}
+
+.badge.bg-warning {
+  background: rgba(255, 183, 77, 0.15) !important;
+  color: #ffb74d !important;
+  border: 1px solid rgba(255, 183, 77, 0.3);
+  font-weight: 600;
+}
+
+.badge.bg-info {
+  background: rgba(38, 166, 154, 0.15) !important;
+  color: var(--cyan-400) !important;
+  border: 1px solid rgba(38, 166, 154, 0.3);
+  font-weight: 600;
+}
+
+.badge.bg-secondary {
+  background: var(--bg-elevated) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border-subtle);
+  font-weight: 600;
+}
+
+.badge.bg-light {
+  background: var(--bg-surface, var(--bg-elevated)) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border-subtle);
+  font-weight: 600;
+}
+
+.badge.bg-success {
+  background: rgba(67, 160, 71, 0.15) !important;
+  color: var(--em-400) !important;
+  border: 1px solid rgba(67, 160, 71, 0.3);
+  font-weight: 600;
+}
+
+/* ───────────────────────────────────────────
+   RESULTS SECTION CARD
+─────────────────────────────────────────── */
+
+#results-section .card,
+#visualizerActionsContainer {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+#results-section .card-header,
+#visualizerActionsContainer .card-header {
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+#visualizerActionsContainer .card-text {
+  color: var(--text-muted);
+}
+
+/* ───────────────────────────────────────────
+   TOAST
+─────────────────────────────────────────── */
+
+.toast {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-primary);
+}
+
+.toast-header {
+  background: var(--bg-elevated) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.toast-body {
+  color: var(--text-secondary);
+}
+
+/* ───────────────────────────────────────────
+   FOOTER (reuse brand identity)
+─────────────────────────────────────────── */
+
+.home-footer {
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+  padding-top: 3.5rem;
+  padding-bottom: 1.5rem;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.footer-brand .brand-logo {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.footer-tagline {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin-bottom: 1rem;
+}
+
+.footer-social-link {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--em-400);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.footer-social-link:hover {
+  color: var(--em-300);
+}
+
+.footer-col-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.footer-links a {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.footer-links a:hover {
+  color: var(--em-400);
+}
+
+.footer-top {
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 1.5rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.footer-social-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.footer-social-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 1rem;
+  text-decoration: none;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.footer-social-icon:hover {
+  color: var(--em-400);
+  background: var(--bg-hover);
+  border-color: var(--border-glow);
+}
+
+/* ───────────────────────────────────────────
+   MAIN CONTENT AREA
+─────────────────────────────────────────── */
+
+main.container {
+  max-width: 1200px;
+}
+
+/* ───────────────────────────────────────────
+   RESPONSIVE
+─────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  .crawler-card .card-body {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 575px) {
+  .footer-bottom {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.4rem;
+  }
+}
