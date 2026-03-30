@@ -93,6 +93,81 @@ document.addEventListener("DOMContentLoaded", function() {
     };
     window.svl.stringToColor = stringToColor;
 
+    function renderDepthChart(searchIndex) {
+        const container = document.getElementById('depth-chart');
+        const wrapper = document.getElementById('depth-chart-container');
+        if (!container || !wrapper) return;
+
+        // Build distribution
+        const depthCounts = {};
+        for (const page of searchIndex) {
+            const d = page.seo?.crawlDepth ?? 0;
+            depthCounts[d] = (depthCounts[d] || 0) + 1;
+        }
+
+        const depths = Object.keys(depthCounts).map(Number).sort((a, b) => a - b);
+        if (depths.length === 0) { wrapper.classList.add('d-none'); return; }
+
+        const maxCount = Math.max(...Object.values(depthCounts));
+        wrapper.classList.remove('d-none');
+
+        // Build bars
+        let barsHtml = '';
+        let labelsHtml = '';
+        for (const depth of depths) {
+            const count = depthCounts[depth];
+            const heightPct = Math.max((count / maxCount) * 100, 5); // min 5% for visibility
+            const color = getDepthColor(depth);
+            const pct = ((count / searchIndex.length) * 100).toFixed(1);
+            barsHtml += `<div class="depth-chart-bar" data-depth="${depth}" style="height:${heightPct}%;background-color:${color};" title="عمق ${depth}: ${count} صفحة"><span class="depth-chart-tooltip">عمق ${depth}: ${count} صفحة (${pct}%)</span></div>`;
+            labelsHtml += `<span class="depth-chart-label">${depth}</span>`;
+        }
+
+        container.innerHTML = barsHtml + `<div class="depth-chart-labels" style="position:absolute;bottom:-14px;left:0;right:0;display:flex;gap:3px;padding:0 2px;">${labelsHtml}</div>`;
+        container.style.position = 'relative';
+        container.style.marginBottom = '16px';
+
+        // ── Click to filter ──
+        container.addEventListener('click', (e) => {
+            const bar = e.target.closest('.depth-chart-bar');
+            if (!bar) return;
+
+            const clickedDepth = Number(bar.dataset.depth);
+            const wasActive = bar.classList.contains('active');
+
+            // Remove active from all
+            container.querySelectorAll('.depth-chart-bar').forEach(b => b.classList.remove('active'));
+
+            if (wasActive) {
+                // Deselect: show all pages in list
+                document.querySelectorAll('#visualizer-page-list li').forEach(li => li.classList.remove('d-none'));
+                if (window.svl.network) {
+                    window.svl.network.unselectAll();
+                    window.enhancements?.onNodeSelection([]);
+                }
+                return;
+            }
+
+            bar.classList.add('active');
+
+            // Filter page list to this depth
+            const matchingUrls = [];
+            searchIndex.forEach(page => {
+                if ((page.seo?.crawlDepth ?? 0) === clickedDepth) matchingUrls.push(page.url);
+            });
+            const matchSet = new Set(matchingUrls);
+
+            document.querySelectorAll('#visualizer-page-list li').forEach(li => {
+                li.classList.toggle('d-none', !matchSet.has(li.dataset.nodeId));
+            });
+
+            // Select matching nodes in graph
+            if (window.svl.network && matchingUrls.length > 0) {
+                window.svl.network.selectNodes(matchingUrls);
+            }
+        });
+    }
+
     function populateSidebar(searchIndex, edges) {
         // ── Core stats ──
         document.getElementById('visualizer-total-pages').textContent = searchIndex.length;
@@ -197,6 +272,9 @@ document.addEventListener("DOMContentLoaded", function() {
             fragment.appendChild(li);
         });
         pageList.appendChild(fragment);
+
+        // Build Depth Distribution Chart
+        renderDepthChart(searchIndex);
     }
 
     function getFontSettings() {
