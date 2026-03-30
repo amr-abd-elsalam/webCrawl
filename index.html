@@ -214,7 +214,7 @@
                 </div>
                 <div class="card-body text-center">
                     <p class="text-muted card-text">تم تجهيز بيانات الزحف. يمكنك الآن تحليل بنية الموقع بصريًا أو نسخ البيانات لاستخدامها لاحقًا.</p>
-                    <div class="d-grid d-sm-flex justify-content-sm-center gap-2"><a class="btn btn-primary" role="button" href="/SiteVisualizerLab/" target="_blank" id="openVisualizerBtn" title="افتح بيانات الزحف في أداة المحلل البصري لتكتشف هيكل الروابط الداخلية"><span class="bi bi-diagram-3-fill ms-2" aria-hidden="true"></span>فتح المحلل البصري <span class="visually-hidden">(يفتح في نافذة جديدة)</span></a><button class="btn btn-secondary" id="copyVisualizerDataBtn" type="button" title="انسخ بيانات الزحف بصيغة JSON إلى الحافظة"><span class="bi bi-clipboard-data-fill ms-2" aria-hidden="true"></span>نسخ بيانات الخريطة </button></div>
+                    <div class="d-grid d-sm-flex justify-content-sm-center gap-2"><a class="btn btn-primary" role="button" href="SiteVisualizerLab/" target="_blank" id="openVisualizerBtn" title="افتح بيانات الزحف في أداة المحلل البصري لتكتشف هيكل الروابط الداخلية"><span class="bi bi-diagram-3-fill ms-2" aria-hidden="true"></span>فتح المحلل البصري <span class="visually-hidden">(يفتح في نافذة جديدة)</span></a><button class="btn btn-secondary" id="copyVisualizerDataBtn" type="button" title="انسخ بيانات الزحف بصيغة JSON إلى الحافظة"><span class="bi bi-clipboard-data-fill ms-2" aria-hidden="true"></span>نسخ بيانات الخريطة </button></div>
                     <p class="form-text mt-3"><span class="bi bi-info-circle-fill ms-1" aria-hidden="true"></span> سيقوم زر "المحلل البصري" بفتح خريطة موقعك تلقائياً في نافذة جديدة.</p>
                 </div>
             </div>
@@ -297,6 +297,12 @@
         <div class="toast hide" role="alert" data-bs-animation="false" id="errorToast" aria-live="assertive" aria-atomic="true">
             <div class="toast-header"><i class="text-danger bi bi-exclamation-triangle-fill ms-2"></i><strong class="ms-auto me-2">خطأ في الإدخال</strong><button class="btn-close me-5 ps-0 ms-0" type="button" data-bs-dismiss="toast" aria-label="Close"></button></div>
             <div class="toast-body" role="alert"><span id="toast-body-message"></span></div>
+        </div>
+    </div>
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div class="toast hide" role="alert" data-bs-animation="false" id="appToast" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header"><i id="toast-icon" class="bi rounded ms-2"></i><strong class="mx-auto" id="toast-title"></strong><button class="btn-close ms-0" type="button" data-bs-dismiss="toast" aria-label="Close"></button></div>
+            <div class="toast-body" role="alert" id="toast-body-content"></div>
         </div>
     </div>
     <script src="assets/bootstrap/js/bootstrap.min.js" defer></script>
