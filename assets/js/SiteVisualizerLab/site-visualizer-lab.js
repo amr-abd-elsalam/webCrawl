@@ -160,20 +160,28 @@ document.addEventListener("DOMContentLoaded", function() {
             const pageTitle = page.title || page.url;
             li.dataset.pageTitle = pageTitle.toLowerCase();
             li.dataset.pageUrl = page.url.toLowerCase();
+            li.setAttribute('role', 'button');
+            li.setAttribute('tabindex', '0');
+            li.setAttribute('aria-label', pageTitle + ' — روابط واردة: ' + (page.seo?.internalLinkEquity || 0));
             const titleSpan = document.createElement('span');
             titleSpan.className = 'text-truncate';
             titleSpan.title = pageTitle;
             titleSpan.textContent = pageTitle;
             const badgeSpan = document.createElement('span');
             badgeSpan.className = 'badge bg-secondary rounded-pill';
+            badgeSpan.setAttribute('aria-hidden', 'true');
             badgeSpan.textContent = page.seo?.internalLinkEquity || 0;
             li.appendChild(titleSpan);
             li.appendChild(badgeSpan);
-            li.addEventListener('click', () => {
+            const focusNode = () => {
                 if (window.svl.network && page.url) {
                     window.svl.network.focus(page.url, { scale: 1.2, animation: true });
                     window.svl.network.selectNodes([page.url]);
                 }
+            };
+            li.addEventListener('click', focusNode);
+            li.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); focusNode(); }
             });
             fragment.appendChild(li);
         });
