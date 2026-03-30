@@ -130,6 +130,169 @@ function convertCsvToAi8V(csvText) {
     return JSON.stringify(pages, null, 2);
 }
 
+// --- Graph Analysis Algorithms ---
+
+function computePageRank(searchIndex, edgeMap, iterations = 20, damping = 0.85) {
+    const N = searchIndex.length;
+    if (N === 0) return {};
+
+    const urls = searchIndex.map(p => p.url);
+    const urlSet = new Set(urls);
+
+    // Build adjacency: outgoing links for each URL
+    const outgoing = {};
+    urls.forEach(u => { outgoing[u] = []; });
+
+    searchIndex.forEach(page => {
+        (page.seo?.contentAnalysis?.outgoingInternalLinks || []).forEach(target => {
+            if (urlSet.has(target) && target !== page.url) {
+                outgoing[page.url].push(target);
+            }
+        });
+    });
+
+    // Initialize scores
+    const pr = {};
+    const base = 1 / N;
+    urls.forEach(u => { pr[u] = base; });
+
+    // Iterative computation
+    for (let iter = 0; iter < iterations; iter++) {
+        const newPr = {};
+        let danglingSum = 0;
+
+        // Collect dangling node contributions
+        urls.forEach(u => {
+            if (outgoing[u].length === 0) {
+                danglingSum += pr[u];
+            }
+        });
+
+        const danglingDistribution = danglingSum / N;
+
+        urls.forEach(u => {
+            newPr[u] = (1 - damping) / N + damping * danglingDistribution;
+        });
+
+        // Distribute rank through links
+        urls.forEach(u => {
+            const out = outgoing[u];
+            if (out.length > 0) {
+                const share = damping * pr[u] / out.length;
+                out.forEach(target => {
+                    newPr[target] += share;
+                });
+            }
+        });
+
+        // Update
+        urls.forEach(u => { pr[u] = newPr[u]; });
+    }
+
+    return pr;
+}
+
+function computeBetweenness(searchIndex, edgeMap) {
+    const urls = searchIndex.map(p => p.url);
+    const N = urls.length;
+    if (N < 3) {
+        const result = {};
+        urls.forEach(u => { result[u] = 0; });
+        return result;
+    }
+
+    const urlSet = new Set(urls);
+
+    // Build undirected adjacency list from actual edges
+    const adj = {};
+    urls.forEach(u => { adj[u] = []; });
+
+    searchIndex.forEach(page => {
+        (page.seo?.contentAnalysis?.outgoingInternalLinks || []).forEach(target => {
+            if (urlSet.has(target) && target !== page.url) {
+                adj[page.url].push(target);
+            }
+        });
+    });
+
+    // Brandes algorithm
+    const cb = {};
+    urls.forEach(u => { cb[u] = 0; });
+
+    for (let si = 0; si < N; si++) {
+        const s = urls[si];
+        const stack = [];
+        const pred = {};
+        const sigma = {};
+        const dist = {};
+        const delta = {};
+
+        urls.forEach(u => {
+            pred[u] = [];
+            sigma[u] = 0;
+            dist[u] = -1;
+            delta[u] = 0;
+        });
+
+        sigma[s] = 1;
+        dist[s] = 0;
+
+        const queue = [s];
+        let qi = 0;
+
+        while (qi < queue.length) {
+            const v = queue[qi++];
+            stack.push(v);
+
+            const neighbors = adj[v];
+            for (let ni = 0; ni < neighbors.length; ni++) {
+                const w = neighbors[ni];
+                if (dist[w] === -1) {
+                    dist[w] = dist[v] + 1;
+                    queue.push(w);
+                }
+                if (dist[w] === dist[v] + 1) {
+                    sigma[w] += sigma[v];
+                    pred[w].push(v);
+                }
+            }
+        }
+
+        // Back-propagation
+        while (stack.length > 0) {
+            const w = stack.pop();
+            const preds = pred[w];
+            for (let pi = 0; pi < preds.length; pi++) {
+                const v = preds[pi];
+                delta[v] += (sigma[v] / sigma[w]) * (1 + delta[w]);
+            }
+            if (w !== s) {
+                cb[w] += delta[w];
+            }
+        }
+    }
+
+    // Normalize: for directed graphs, divide by (N-1)(N-2)
+    const normFactor = (N - 1) * (N - 2);
+    if (normFactor > 0) {
+        urls.forEach(u => { cb[u] /= normFactor; });
+    }
+
+    return cb;
+}
+
+function normalizeToScore(values) {
+    const vals = Object.values(values);
+    const max = Math.max(...vals);
+    const min = Math.min(...vals);
+    const range = max - min;
+
+    const scores = {};
+    for (const key in values) {
+        scores[key] = range > 0 ? Math.round(((values[key] - min) / range) * 100) : 50;
+    }
+    return scores;
+}
 
 // --- Main Data Processing Logic ---
 function processData(jsonDataString) {
@@ -197,6 +360,23 @@ function processData(jsonDataString) {
         };
     });
     
+    // --- Compute graph analysis metrics ---
+    const pageRankRaw = computePageRank(fullSearchIndex, edgeMap);
+    const pageRankScores = normalizeToScore(pageRankRaw);
+    const betweennessRaw = computeBetweenness(fullSearchIndex, edgeMap);
+    const betweennessScores = normalizeToScore(betweennessRaw);
+
+    // Attach computed metrics to each page
+    fullSearchIndex.forEach(page => {
+        if (!page.seo) page.seo = {};
+        page.seo._computed = {
+            pageRank: pageRankRaw[page.url] || 0,
+            pageRankScore: pageRankScores[page.url] || 0,
+            betweenness: betweennessRaw[page.url] || 0,
+            betweennessScore: betweennessScores[page.url] || 0,
+        };
+    });
+
     return { fullSearchIndex, edges };
 }
 
