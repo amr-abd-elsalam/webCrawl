@@ -10,7 +10,7 @@
 
 @font-face {
 font-family: 'Inter';
-src: url('/assets/fonts/inter-variable.woff2') format('woff2');
+src: url('../assets/fonts/inter-variable.woff2') format('woff2');
 font-weight: 100 900;
 font-style: normal;
 font-display: swap;
@@ -22,7 +22,7 @@ U+FEFF, U+FFFD;
 
 @font-face {
 font-family: 'Cairo';
-src: url('/assets/fonts/cairo-variable.woff2') format('woff2');
+src: url('../assets/fonts/cairo-variable.woff2') format('woff2');
 font-weight: 200 1000;
 font-style: normal;
 font-display: swap;
