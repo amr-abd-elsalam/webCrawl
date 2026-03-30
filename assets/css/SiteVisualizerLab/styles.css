@@ -440,3 +440,23 @@ body.fullscreen-mode .visualizer-column {
   align-self: stretch;
   min-height: 0;
 }
+
+/* ── Processing Progress Overlay ── */
+
+.processing-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 14;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
+  border-radius: .375rem;
+  transition: opacity 0.3s ease;
+}
+
+.processing-overlay.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
