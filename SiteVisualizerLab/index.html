@@ -133,10 +133,47 @@
                     </div>
                 </div>
                 <div class="col-12 col-lg-3 p-4 bg-body-tertiary border-start" id="visualizer-sidebar">
-                    <div class="flex-shrink-0 border-bottom pb-3 mb-3">
-                        <h3 class="fw-bold text-primary h6 mb-0">ملخص التحليل</h3>
-                        <div class="text-muted d-flex justify-content-between small mt-2"><span>إجمالي الصفحات:</span><strong id="visualizer-total-pages">0</strong></div>
-                        <div class="text-muted d-flex justify-content-between small"><span>إجمالي الروابط:</span><strong id="visualizer-total-links">0</strong></div>
+                    <div class="flex-shrink-0 border-bottom pb-3 mb-3" id="stats-dashboard">
+                        <h3 class="fw-bold text-primary h6 mb-2">ملخص التحليل</h3>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="stat-card">
+                                    <div class="stat-value" id="visualizer-total-pages">0</div>
+                                    <div class="stat-label">إجمالي الصفحات</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card">
+                                    <div class="stat-value" id="visualizer-total-links">0</div>
+                                    <div class="stat-label">إجمالي الروابط</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card stat-card--warning">
+                                    <div class="stat-value" id="visualizer-orphan-pages">0</div>
+                                    <div class="stat-label">صفحات يتيمة</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card stat-card--danger">
+                                    <div class="stat-value" id="visualizer-noindex-pages">0</div>
+                                    <div class="stat-label">ممنوعة الفهرسة</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card">
+                                    <div class="stat-value" id="visualizer-max-depth">0</div>
+                                    <div class="stat-label">أقصى عمق</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card">
+                                    <div class="stat-value" id="visualizer-avg-inlinks">0</div>
+                                    <div class="stat-label">متوسط الواردة</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-none mt-2" id="stats-insights"></div>
                     </div>
                     <div class="flex-shrink-0 border-bottom pb-3 mb-3" id="node-inspector" aria-live="polite">
                         <div id="inspector-placeholder">
