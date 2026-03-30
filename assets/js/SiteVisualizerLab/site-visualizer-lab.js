@@ -69,8 +69,71 @@ document.addEventListener("DOMContentLoaded", function() {
     window.svl.stringToColor = stringToColor;
 
     function populateSidebar(searchIndex, edges) {
+        // ── Core stats ──
         document.getElementById('visualizer-total-pages').textContent = searchIndex.length;
         document.getElementById('visualizer-total-links').textContent = edges.length;
+
+        // ── Extended stats ──
+        let orphanCount = 0;
+        let noindexCount = 0;
+        let maxDepth = 0;
+        let totalInlinks = 0;
+
+        for (const page of searchIndex) {
+            const seo = page.seo || {};
+            if (seo.isOrphan) orphanCount++;
+            if (seo.isNoIndex) noindexCount++;
+            const depth = seo.crawlDepth || 0;
+            if (depth > maxDepth) maxDepth = depth;
+            totalInlinks += seo.internalLinkEquity || 0;
+        }
+
+        const avgInlinks = searchIndex.length > 0
+            ? (totalInlinks / searchIndex.length).toFixed(1)
+            : '0';
+
+        document.getElementById('visualizer-orphan-pages').textContent = orphanCount;
+        document.getElementById('visualizer-noindex-pages').textContent = noindexCount;
+        document.getElementById('visualizer-max-depth').textContent = maxDepth;
+        document.getElementById('visualizer-avg-inlinks').textContent = avgInlinks;
+
+        // ── Smart Insights ──
+        const insightsEl = document.getElementById('stats-insights');
+        const insights = [];
+
+        if (orphanCount > 0) {
+            insights.push({
+                icon: 'bi-exclamation-triangle-fill text-warning',
+                text: `${orphanCount} صفحة يتيمة — أضف لها روابط داخلية لتحسين الزحف.`,
+            });
+        }
+        if (noindexCount > 0) {
+            insights.push({
+                icon: 'bi-eye-slash-fill text-danger',
+                text: `${noindexCount} صفحة ممنوعة من الفهرسة — تأكد أن هذا مقصود.`,
+            });
+        }
+        if (maxDepth > 3) {
+            insights.push({
+                icon: 'bi-arrow-down-circle-fill text-info',
+                text: `أعمق صفحة على بعد ${maxDepth} نقرات — حاول ألا تتجاوز 3.`,
+            });
+        }
+        if (searchIndex.length > 0 && orphanCount === 0 && noindexCount === 0 && maxDepth <= 3) {
+            insights.push({
+                icon: 'bi-check-circle-fill text-success',
+                text: 'بنية الموقع سليمة — لا مشاكل واضحة في الربط الداخلي.',
+            });
+        }
+
+        if (insights.length > 0) {
+            insightsEl.classList.remove('d-none');
+            insightsEl.innerHTML = insights.map(i =>
+                `<div class="insight-item"><i class="bi ${i.icon}"></i><span>${i.text}</span></div>`
+            ).join('');
+        } else {
+            insightsEl.classList.add('d-none');
+        }
         const pageList = document.getElementById('visualizer-page-list');
         pageList.innerHTML = '';
         const fragment = document.createDocumentFragment();
@@ -127,6 +190,12 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('visualizer-page-list').innerHTML = '';
         document.getElementById('visualizer-total-pages').textContent = '0';
         document.getElementById('visualizer-total-links').textContent = '0';
+        document.getElementById('visualizer-orphan-pages').textContent = '0';
+        document.getElementById('visualizer-noindex-pages').textContent = '0';
+        document.getElementById('visualizer-max-depth').textContent = '0';
+        document.getElementById('visualizer-avg-inlinks').textContent = '0';
+        const insightsEl = document.getElementById('stats-insights');
+        if (insightsEl) { insightsEl.classList.add('d-none'); insightsEl.innerHTML = ''; }
         dom.searchInput.value = '';
     }
 
