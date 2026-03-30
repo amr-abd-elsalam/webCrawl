@@ -283,6 +283,50 @@ document.addEventListener("DOMContentLoaded", function() {
                     }
                     newProperties.color = color;
                     break;
+                case 'pageRank': {
+                    const score = page.seo?._computed?.pageRankScore ?? 0;
+                    // Gradient: low(blue #5bc0de) → mid(yellow #ffc107) → high(green #28a745)
+                    let color;
+                    if (score <= 50) {
+                        const t = score / 50;
+                        const r = Math.round(91 + (255 - 91) * t);
+                        const g = Math.round(192 + (193 - 192) * t);
+                        const b = Math.round(222 + (7 - 222) * t);
+                        color = `rgb(${r},${g},${b})`;
+                    } else {
+                        const t = (score - 50) / 50;
+                        const r = Math.round(255 + (40 - 255) * t);
+                        const g = Math.round(193 + (167 - 193) * t);
+                        const b = Math.round(7 + (69 - 7) * t);
+                        color = `rgb(${r},${g},${b})`;
+                    }
+                    newProperties.color = color;
+                    newProperties.value = 1 + (score / 10);
+                    newProperties.label = String(score);
+                    break;
+                }
+                case 'betweenness': {
+                    const score = page.seo?._computed?.betweennessScore ?? 0;
+                    // Gradient: low(grey #6c757d) → mid(orange #fd7e14) → high(red #dc3545)
+                    let color;
+                    if (score <= 50) {
+                        const t = score / 50;
+                        const r = Math.round(108 + (253 - 108) * t);
+                        const g = Math.round(117 + (126 - 117) * t);
+                        const b = Math.round(125 + (20 - 125) * t);
+                        color = `rgb(${r},${g},${b})`;
+                    } else {
+                        const t = (score - 50) / 50;
+                        const r = Math.round(253 + (220 - 253) * t);
+                        const g = Math.round(126 + (53 - 126) * t);
+                        const b = Math.round(20 + (69 - 20) * t);
+                        color = `rgb(${r},${g},${b})`;
+                    }
+                    newProperties.color = color;
+                    newProperties.value = 1 + (score / 10);
+                    newProperties.label = String(score);
+                    break;
+                }
                 case 'linkEquity':
                 default:
                     newProperties.color = page.seo?.isOrphan ? '#f0ad4e' : (page.seo?.isNoIndex ? '#d9534f' : '#5bc0de');
