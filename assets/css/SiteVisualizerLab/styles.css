@@ -267,3 +267,26 @@ body.fullscreen-mode .visualizer-column {
     display: none !important;
   }
 }
+
+/* ── Inspector Link Lists ── */
+
+.inspector-link-list {
+  max-height: 180px;
+  overflow-y: auto;
+  font-size: 0.75rem;
+}
+
+.inspector-link-list .list-group-item {
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  border-color: var(--bs-border-color-translucent);
+}
+
+.inspector-link-list .list-group-item:hover {
+  background-color: var(--bs-tertiary-bg);
+}
+
+#inspector-links-section .btn-outline-secondary {
+  font-size: 0.78rem;
+  padding: 0.25rem 0.5rem;
+}
