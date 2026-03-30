@@ -107,25 +107,63 @@ function processData(jsonDataString) {
     const fullSearchIndex = data.filter(item => item && item.url);
     if (fullSearchIndex.length === 0) throw new Error("لم يتم العثور على صفحات صالحة (تحتوي على url) في البيانات.");
 
-    // Edge creation logic
+    // Edge creation logic — direction-aware aggregation
     const pageUrls = new Set(fullSearchIndex.map(p => p.url));
-    const edgeAggregator = {};
+    const edgeMap = {};
+
     fullSearchIndex.forEach(sourcePage => {
         (sourcePage.seo?.contentAnalysis?.outgoingInternalLinks || []).forEach(targetUrl => {
-            if (pageUrls.has(targetUrl) && sourcePage.url !== targetUrl) {
-                const key = [sourcePage.url, targetUrl].sort().join('|');
-                if (!edgeAggregator[key]) edgeAggregator[key] = { from: sourcePage.url, to: targetUrl, count: 0 };
-                edgeAggregator[key].count++;
+            if (!pageUrls.has(targetUrl) || sourcePage.url === targetUrl) return;
+
+            // Canonical key: always store with the alphabetically-first URL as "nodeA"
+            const [nodeA, nodeB] = [sourcePage.url, targetUrl].sort();
+            const key = nodeA + '|' + nodeB;
+
+            if (!edgeMap[key]) {
+                edgeMap[key] = { nodeA, nodeB, forwardCount: 0, reverseCount: 0 };
+            }
+
+            // "forward" = nodeA → nodeB, "reverse" = nodeB → nodeA
+            if (sourcePage.url === nodeA) {
+                edgeMap[key].forwardCount++;
+            } else {
+                edgeMap[key].reverseCount++;
             }
         });
     });
-    
-    const edges = Object.values(edgeAggregator).map(edgeInfo => ({
-        from: edgeInfo.from, to: edgeInfo.to, value: edgeInfo.count,
-        length: 350 / edgeInfo.count,
-        title: edgeInfo.count > 1 ? `رابط متبادل (x${edgeInfo.count})` : 'رابط أحادي',
-        arrows: { to: { enabled: true, scaleFactor: 0.5 }, from: { enabled: edgeInfo.count > 1, scaleFactor: 0.5 } }
-    }));
+
+    const edges = Object.values(edgeMap).map(e => {
+        const totalWeight = e.forwardCount + e.reverseCount;
+        const isBidirectional = e.forwardCount > 0 && e.reverseCount > 0;
+
+        // Set from/to so the arrow points in the correct direction for one-way links
+        let from, to;
+        if (e.forwardCount > 0 && e.reverseCount === 0) {
+            from = e.nodeA; to = e.nodeB;       // A → B only
+        } else if (e.forwardCount === 0 && e.reverseCount > 0) {
+            from = e.nodeB; to = e.nodeA;       // B → A only
+        } else {
+            from = e.nodeA; to = e.nodeB;       // bidirectional — direction doesn't matter
+        }
+
+        let title;
+        if (isBidirectional) {
+            title = `رابط متبادل (${e.forwardCount} + ${e.reverseCount})`;
+        } else {
+            title = totalWeight > 1 ? `${totalWeight} روابط أحادية` : 'رابط أحادي';
+        }
+
+        return {
+            from, to,
+            value: totalWeight,
+            length: 350 / totalWeight,
+            title,
+            arrows: {
+                to: { enabled: true, scaleFactor: 0.5 },
+                from: { enabled: isBidirectional, scaleFactor: 0.5 }
+            }
+        };
+    });
     
     return { fullSearchIndex, edges };
 }
