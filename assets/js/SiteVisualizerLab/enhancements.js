@@ -148,6 +148,21 @@ document.addEventListener("DOMContentLoaded", function() {
                          legendHtml = `<p class="mb-0 small text-muted">يتم تلوين كل قسم (حسب المسار) بلون فريد.</p>`;
                     }
                     break;
+                                    case 'pageRank':
+                    legendHtml = `<ul>
+                        ${createSwatch('#5bc0de', 'منخفض (0)')}
+                        ${createSwatch('#ffc107', 'متوسط (50)')}
+                        ${createSwatch('#28a745', 'مرتفع (100)')}
+                    </ul><p class="mb-0 mt-1 small text-muted">الرقم على كل عقدة يمثل نقاط القوة (0–100). الحجم يتناسب مع القيمة.</p>`;
+                    break;
+                case 'betweenness':
+                    legendHtml = `<ul>
+                        ${createSwatch('#6c757d', 'طرفية (0)')}
+                        ${createSwatch('#fd7e14', 'معتدلة (50)')}
+                        ${createSwatch('#dc3545', 'جسر حرج (100)')}
+                    </ul><p class="mb-0 mt-1 small text-muted">الرقم يمثل أهمية الصفحة كجسر بين أقسام الموقع. القيمة العالية = نقطة اختناق.</p>`;
+                    break;
+
                 case 'linkEquity':
                 default:
                     legendHtml = `<ul>
@@ -369,14 +384,17 @@ document.addEventListener("DOMContentLoaded", function() {
                     }).catch(err => this.showToast(err, 'error'));
             });
             
-            // Regex Cluster Controls Logic
-            dom.viewModesGroup.addEventListener('click', (e) => {
-                if (e.target.matches('[data-view-mode]')) {
-                    const mode = e.target.dataset.viewMode;
-                    this.updateLegend(mode);
-                    dom.topicClusterControls.classList.toggle('d-none', mode !== 'topicCluster');
-                }
-            });
+            // Regex Cluster Controls Logic — listen on both button groups
+            const handleViewModeClick = (e) => {
+                const btn = e.target.closest('[data-view-mode]');
+                if (!btn) return;
+                const mode = btn.dataset.viewMode;
+                this.updateLegend(mode);
+                dom.topicClusterControls.classList.toggle('d-none', mode !== 'topicCluster');
+            };
+            dom.viewModesGroup.addEventListener('click', handleViewModeClick);
+            const viewModesGroup2 = document.getElementById('view-modes-group-2');
+            if (viewModesGroup2) viewModesGroup2.addEventListener('click', handleViewModeClick);
 
             dom.addClusterRuleBtn.addEventListener('click', () => {
                 const ruleNode = dom.clusterRuleTemplate.firstElementChild.cloneNode(true);
