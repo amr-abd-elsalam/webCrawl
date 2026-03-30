@@ -284,48 +284,72 @@ document.addEventListener("DOMContentLoaded", function() {
             
             if (!window.svl.network || !window.svl.currentNodes) return;
             
-            const allNodeIds = window.svl.currentNodes.getIds();
-            if (!nodeId) { // Reset if nothing is selected
-                 if (window.svl.isClustered) return; // Don't reset colors if clustered
-                const nodesToUpdate = allNodeIds.map(id => {
-                    const originalSettings = window.svl.originalNodeSettings[id];
-                    if (!originalSettings) return null;
-                    return {
-                        id,
-                        color: originalSettings.color,
-                        font: window.svl.areLabelsVisible ? originalSettings.font : { size: 0 }
-                    };
-                }).filter(Boolean);
+            const prevDimmed = window.svl._dimmedNodeIds;
+            const prevHidden = window.svl._hiddenEdgeIds;
 
-                if (nodesToUpdate.length > 0) window.svl.currentNodes.update(nodesToUpdate);
-                if (window.svl.currentEdges) window.svl.currentEdges.update(window.svl.currentEdges.get().map(e => ({ id: e.id, hidden: false })));
+            if (!nodeId) { // Reset — only restore previously dimmed nodes
+                 if (window.svl.isClustered) return;
+                if (prevDimmed.size > 0) {
+                    const nodesToRestore = [];
+                    for (const id of prevDimmed) {
+                        const orig = window.svl.originalNodeSettings[id];
+                        if (orig) nodesToRestore.push({ id, color: orig.color, font: window.svl.areLabelsVisible ? orig.font : { size: 0 } });
+                    }
+                    if (nodesToRestore.length > 0) window.svl.currentNodes.update(nodesToRestore);
+                }
+                if (prevHidden.size > 0) {
+                    const edgesToShow = [];
+                    for (const id of prevHidden) edgesToShow.push({ id, hidden: false });
+                    window.svl.currentEdges.update(edgesToShow);
+                }
+                window.svl._dimmedNodeIds = new Set();
+                window.svl._hiddenEdgeIds = new Set();
             } else {
                 const connectedNodes = new Set([nodeId, ...window.svl.network.getConnectedNodes(nodeId)]);
-                const dimColor = 'rgba(200, 200, 200, 0.1)';
-
-                const nodesToUpdate = allNodeIds.map(id => {
-                    const originalSettings = window.svl.originalNodeSettings[id];
-                    if (!originalSettings) return null;
-
-                    if (connectedNodes.has(id)) {
-                        return {
-                            id,
-                            color: originalSettings.color,
-                            font: window.svl.areLabelsVisible ? originalSettings.font : { size: 0 }
-                        };
-                    } else {
-                        return {
-                            id,
-                            color: { background: dimColor, border: 'rgba(200,200,200,0.2)' },
-                            font: { color: dimColor, strokeWidth: 0 }
-                        };
-                    }
-                }).filter(Boolean);
-                
-                window.svl.currentNodes.update(nodesToUpdate);
-                
                 const connectedEdgeIds = new Set(window.svl.network.getConnectedEdges(nodeId));
-                window.svl.currentEdges.update(window.svl.currentEdges.get().map(edge => ({ id: edge.id, hidden: !connectedEdgeIds.has(edge.id) })));
+                const dimColor = 'rgba(200, 200, 200, 0.1)';
+                const dimBorder = 'rgba(200,200,200,0.2)';
+
+                const newDimmed = new Set();
+                const nodesToUpdate = [];
+
+                // Nodes that were dimmed but should now be restored
+                for (const id of prevDimmed) {
+                    if (connectedNodes.has(id)) {
+                        const orig = window.svl.originalNodeSettings[id];
+                        if (orig) nodesToUpdate.push({ id, color: orig.color, font: window.svl.areLabelsVisible ? orig.font : { size: 0 } });
+                    }
+                }
+
+                // Nodes that should be dimmed now
+                const allNodeIds = window.svl.currentNodes.getIds();
+                for (const id of allNodeIds) {
+                    if (!connectedNodes.has(id)) {
+                        newDimmed.add(id);
+                        if (!prevDimmed.has(id)) { // Only update if not already dimmed
+                            nodesToUpdate.push({ id, color: { background: dimColor, border: dimBorder }, font: { color: dimColor, strokeWidth: 0 } });
+                        }
+                    }
+                }
+
+                if (nodesToUpdate.length > 0) window.svl.currentNodes.update(nodesToUpdate);
+
+                // Edges — only update changed ones
+                const newHidden = new Set();
+                const edgesToUpdate = [];
+                const allEdges = window.svl.currentEdges.getIds();
+                for (const eid of allEdges) {
+                    const shouldHide = !connectedEdgeIds.has(eid);
+                    if (shouldHide) newHidden.add(eid);
+                    const wasHidden = prevHidden.has(eid);
+                    if (shouldHide !== wasHidden) {
+                        edgesToUpdate.push({ id: eid, hidden: shouldHide });
+                    }
+                }
+                if (edgesToUpdate.length > 0) window.svl.currentEdges.update(edgesToUpdate);
+
+                window.svl._dimmedNodeIds = newDimmed;
+                window.svl._hiddenEdgeIds = newHidden;
             }
         },
 
