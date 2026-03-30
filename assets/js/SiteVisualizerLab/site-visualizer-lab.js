@@ -40,6 +40,10 @@ document.addEventListener("DOMContentLoaded", function() {
         exportPngBtn: document.getElementById('exportPngBtn'),
         exportCsvBtn: document.getElementById('exportCsvBtn'),
         exportGexfBtn: document.getElementById('exportGexfBtn'),
+        zoomInBtn: document.getElementById('zoomInBtn'),
+        zoomOutBtn: document.getElementById('zoomOutBtn'),
+        fitViewBtn: document.getElementById('fitViewBtn'),
+        zoomDivider: document.getElementById('zoomDivider'),
         stabilizationOverlay: document.getElementById('stabilizationOverlay'),
         stabilizationBar: document.getElementById('stabilizationBar'),
         stabilizationPercent: document.getElementById('stabilizationPercent'),
@@ -218,6 +222,10 @@ document.addEventListener("DOMContentLoaded", function() {
         dom.exportPngBtn.classList.add('d-none');
         dom.exportCsvBtn.classList.add('d-none');
         dom.exportGexfBtn.classList.add('d-none');
+        dom.zoomInBtn.classList.add('d-none');
+        dom.zoomOutBtn.classList.add('d-none');
+        dom.fitViewBtn.classList.add('d-none');
+        dom.zoomDivider.classList.add('d-none');
         dom.clusterGraphBtn.classList.add('d-none');
 
         document.getElementById('visualizer-page-list').innerHTML = '';
@@ -256,6 +264,10 @@ document.addEventListener("DOMContentLoaded", function() {
             dom.exportPngBtn.classList.remove('d-none');
             dom.exportCsvBtn.classList.remove('d-none');
             dom.exportGexfBtn.classList.remove('d-none');
+            dom.zoomInBtn.classList.remove('d-none');
+            dom.zoomOutBtn.classList.remove('d-none');
+            dom.fitViewBtn.classList.remove('d-none');
+            dom.zoomDivider.classList.remove('d-none');
 
             dom.viewModeButtons.forEach(btn => btn.classList.remove('active'));
             document.querySelector('[data-view-mode="linkEquity"]').classList.add('active');
@@ -738,7 +750,24 @@ document.addEventListener("DOMContentLoaded", function() {
             if (window.svl.network) setTimeout(() => window.svl.network.fit(), 300);
         });
 
-                // ── Context Menu ──
+                // ── Zoom Controls ──
+        dom.fitViewBtn.addEventListener('click', () => {
+            if (window.svl.network) window.svl.network.fit({ animation: { duration: 400, easingFunction: 'easeInOutQuad' } });
+        });
+
+        dom.zoomInBtn.addEventListener('click', () => {
+            if (!window.svl.network) return;
+            const scale = window.svl.network.getScale();
+            window.svl.network.moveTo({ scale: scale * 1.4, animation: { duration: 250, easingFunction: 'easeInOutQuad' } });
+        });
+
+        dom.zoomOutBtn.addEventListener('click', () => {
+            if (!window.svl.network) return;
+            const scale = window.svl.network.getScale();
+            window.svl.network.moveTo({ scale: scale / 1.4, animation: { duration: 250, easingFunction: 'easeInOutQuad' } });
+        });
+
+        // ── Context Menu ──
         const ctxMenu = dom.contextMenu;
 
         function hideContextMenu() {
@@ -947,6 +976,16 @@ document.addEventListener("DOMContentLoaded", function() {
                     break;
                 case 'p':
                     dom.togglePhysicsBtn.click();
+                    break;
+                case '0':
+                    dom.fitViewBtn.click();
+                    break;
+                case '=':
+                case '+':
+                    dom.zoomInBtn.click();
+                    break;
+                case '-':
+                    dom.zoomOutBtn.click();
                     break;
                 case 'delete':
                 case 'backspace':
