@@ -228,6 +228,16 @@
                 </div>
             </div>
         </main>
+        <div class="ctx-menu d-none" id="graphContextMenu" role="menu" aria-label="خيارات العقدة">
+            <button class="ctx-menu-item" role="menuitem" data-action="open"><i class="bi bi-box-arrow-up-right"></i> فتح الرابط</button>
+            <button class="ctx-menu-item" role="menuitem" data-action="focus"><i class="bi bi-search"></i> التركيز على العقدة</button>
+            <div class="ctx-menu-divider"></div>
+            <button class="ctx-menu-item" role="menuitem" data-action="inlinks"><i class="bi bi-box-arrow-in-down-left"></i> عرض الواردة فقط</button>
+            <button class="ctx-menu-item" role="menuitem" data-action="outlinks"><i class="bi bi-box-arrow-up-right"></i> عرض الصادرة فقط</button>
+            <div class="ctx-menu-divider"></div>
+            <button class="ctx-menu-item ctx-menu-item--danger" role="menuitem" data-action="hide"><i class="bi bi-eye-slash"></i> إخفاء هذه العقدة</button>
+            <button class="ctx-menu-item ctx-menu-item--restore d-none" role="menuitem" data-action="restore"><i class="bi bi-arrow-counterclockwise"></i> إظهار العقد المخفية (<span id="ctxHiddenCount">0</span>)</button>
+        </div>
         <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:1100;">
             <div class="toast jello animated hide" role="alert" data-bs-animation="false" id="appToast" aria-live="assertive" aria-atomic="true">
                 <div class="toast-header"><i id="toast-icon" class="bi rounded ms-2"></i><strong class="mx-auto" id="toast-title"></strong><button class="btn-close ms-0" type="button" data-bs-dismiss="toast" aria-label="Close"></button></div>
