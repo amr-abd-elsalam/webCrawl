@@ -77,6 +77,11 @@ body.fullscreen-mode .visualizer-column {
     height: auto;
     flex-direction: column;
   }
+  
+  /* Column order: left controls → right sidebar → visualizer (last) */
+  .control-column    { order: 1; }
+  #visualizer-sidebar { order: 2; }
+  .visualizer-column  { order: 3; min-height: 70vh; }
 }
 
 @media (max-width: 991.98px) {
@@ -223,4 +228,42 @@ body.fullscreen-mode .visualizer-column {
 #stats-insights .insight-item i {
     flex-shrink: 0;
     margin-top: 0.15rem;
+}
+
+/* ── Scrollbar alignment: left column scrollbar on the right (inner edge) ── */
+.control-column {
+  direction: ltr;          /* scrollbar moves to the right side */
+}
+.control-column > * {
+  direction: rtl;          /* restore RTL for all content inside */
+}
+
+/* ── Floating scroll-to-top button ── */
+#scrollToTopBtn {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;                /* centered horizontally */
+  transform: translateX(-50%);
+  z-index: 1090;
+  width: 48px;
+  height: 48px;
+  display: none !important; /* hidden by default, shown via JS */
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+#scrollToTopBtn.visible {
+  display: flex !important;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Only on mobile */
+@media (min-width: 992px) {
+  #scrollToTopBtn {
+    display: none !important;
+  }
 }
