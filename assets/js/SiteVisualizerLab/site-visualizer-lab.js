@@ -146,6 +146,7 @@ document.addEventListener("DOMContentLoaded", function() {
             li.dataset.nodeId = page.url;
             const pageTitle = page.title || page.url;
             li.dataset.pageTitle = pageTitle.toLowerCase();
+            li.dataset.pageUrl = page.url.toLowerCase();
             const titleSpan = document.createElement('span');
             titleSpan.className = 'text-truncate';
             titleSpan.title = pageTitle;
@@ -428,10 +429,25 @@ document.addEventListener("DOMContentLoaded", function() {
 
         dom.searchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase().trim();
+            if (!searchTerm) {
+                document.querySelectorAll('#visualizer-page-list li').forEach(item => {
+                    item.classList.remove('d-none');
+                });
+                return;
+            }
+            let firstMatch = null;
             document.querySelectorAll('#visualizer-page-list li').forEach(item => {
-                const itemText = item.dataset.pageTitle || '';
-                item.classList.toggle('d-none', !itemText.includes(searchTerm));
+                const titleMatch = (item.dataset.pageTitle || '').includes(searchTerm);
+                const urlMatch = (item.dataset.pageUrl || '').includes(searchTerm);
+                const isVisible = titleMatch || urlMatch;
+                item.classList.toggle('d-none', !isVisible);
+                if (isVisible && !firstMatch) firstMatch = item;
             });
+            // Auto-focus the first match in the graph
+            if (firstMatch && window.svl.network) {
+                const nodeId = firstMatch.dataset.nodeId;
+                window.svl.network.focus(nodeId, { scale: 1.0, animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
+            }
         });
 
         dom.viewModeButtons.forEach(button => {
