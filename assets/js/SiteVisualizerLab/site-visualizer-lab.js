@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", function() {
         fullscreenBtn: document.getElementById('fullscreenBtn'),
         clusterGraphBtn: document.getElementById('clusterGraphBtn'),
         exportPngBtn: document.getElementById('exportPngBtn'),
+        exportCsvBtn: document.getElementById('exportCsvBtn'),
     };
 
     function sanitizeHTML(str) {
@@ -188,6 +189,7 @@ document.addEventListener("DOMContentLoaded", function() {
         dom.togglePhysicsBtn.classList.add('d-none');
         dom.fullscreenBtn.classList.add('d-none');
         dom.exportPngBtn.classList.add('d-none');
+        dom.exportCsvBtn.classList.add('d-none');
         dom.clusterGraphBtn.classList.add('d-none');
 
         document.getElementById('visualizer-page-list').innerHTML = '';
@@ -213,6 +215,7 @@ document.addEventListener("DOMContentLoaded", function() {
             dom.togglePhysicsBtn.classList.remove('d-none');
             dom.fullscreenBtn.classList.remove('d-none');
             dom.exportPngBtn.classList.remove('d-none');
+            dom.exportCsvBtn.classList.remove('d-none');
 
             dom.viewModeButtons.forEach(btn => btn.classList.remove('active'));
             document.querySelector('[data-view-mode="linkEquity"]').classList.add('active');
@@ -492,6 +495,51 @@ document.addEventListener("DOMContentLoaded", function() {
                 clusterGraph();
             }
         });
+            dom.exportCsvBtn.addEventListener('click', () => {
+            if (!window.svl.fullSearchIndex || window.svl.fullSearchIndex.length === 0) {
+                window.showToast?.('لا توجد بيانات للتصدير.', 'error');
+                return;
+            }
+            try {
+                const escCsv = (val) => {
+                    const str = String(val ?? '');
+                    return str.includes(',') || str.includes('"') || str.includes('\n')
+                        ? '"' + str.replace(/"/g, '""') + '"'
+                        : str;
+                };
+
+                const headers = ['URL', 'Title', 'Crawl Depth', 'Inlinks', 'Outlinks', 'Is Orphan', 'Is NoIndex', 'PageRank Score', 'Betweenness Score'];
+                const rows = window.svl.fullSearchIndex.map(page => {
+                    const seo = page.seo || {};
+                    const computed = seo._computed || {};
+                    const outlinks = seo.contentAnalysis?.outgoingInternalLinks?.length || 0;
+                    return [
+                        escCsv(page.url),
+                        escCsv(page.title),
+                        seo.crawlDepth ?? '',
+                        seo.internalLinkEquity || 0,
+                        outlinks,
+                        seo.isOrphan ? 'Yes' : 'No',
+                        seo.isNoIndex ? 'Yes' : 'No',
+                        computed.pageRankScore ?? '',
+                        computed.betweennessScore ?? ''
+                    ].join(',');
+                });
+
+                const csvContent = '\uFEFF' + headers.join(',') + '\n' + rows.join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.download = `site-analysis-${new Date().toISOString().slice(0, 10)}.csv`;
+                link.href = URL.createObjectURL(blob);
+                link.click();
+                URL.revokeObjectURL(link.href);
+                window.showToast?.('تم تصدير البيانات بنجاح.', 'success');
+            } catch (e) {
+                console.error('CSV Export error:', e);
+                window.showToast?.('فشل التصدير: ' + e.message, 'error');
+            }
+        });
+
         dom.exportPngBtn.addEventListener('click', () => {
             if (!window.svl.network) return;
             try {
