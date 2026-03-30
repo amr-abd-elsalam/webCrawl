@@ -379,6 +379,39 @@ document.addEventListener("DOMContentLoaded", function() {
 
             // ── Auto-load from sessionStorage (integration with Crawler tool) ──
             this.autoLoadFromSession();
+
+// ── Floating scroll-to-top button (mobile only) ──
+const scrollBtn = document.getElementById('scrollToTopBtn');
+if (scrollBtn) {
+  const visualizerCol = document.querySelector('.visualizer-column');
+
+  // Use IntersectionObserver to detect when the visualizer column enters the viewport
+  if (visualizerCol && window.matchMedia('(max-width: 991.98px)').matches) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          scrollBtn.classList.add('visible');
+        } else {
+          scrollBtn.classList.remove('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    observer.observe(visualizerCol);
+  }
+
+        scrollBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Re-evaluate on resize (in case orientation changes)
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 992) {
+            scrollBtn.classList.remove('visible');
+            }
+        });
+        }
+        
         }
     };
 
