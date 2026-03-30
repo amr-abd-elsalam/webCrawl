@@ -139,6 +139,16 @@
                             <div class="stabilization-percent" id="stabilizationPercent">0%</div>
                         </div>
                     </div>
+                    <div class="processing-overlay d-none" id="processingOverlay" role="status" aria-live="polite">
+                        <div class="stabilization-content">
+                            <i class="bi bi-cpu stabilization-icon" aria-hidden="true"></i>
+                            <div class="stabilization-text" id="processingStageText">جاري تحليل البيانات...</div>
+                            <div class="stabilization-track">
+                                <div class="stabilization-bar" id="processingBar"></div>
+                            </div>
+                            <div class="stabilization-percent" id="processingPercent">0%</div>
+                        </div>
+                    </div>
                     <div class="text-center text-muted p-5" id="visualizerPlaceholder">
                     <i class="bi bi-bounding-box" style="font-size:4rem;" aria-hidden="true"></i>
                         <p class="fs-5 mt-3">في انتظار بيانات الزحف لبناء الخريطة البصرية...</p>
