@@ -617,6 +617,45 @@ document.addEventListener("DOMContentLoaded", function() {
             if (window.svl.network) setTimeout(() => window.svl.network.fit(), 300);
         });
 
+        // ── Keyboard Shortcuts ──
+        document.addEventListener('keydown', (e) => {
+            // Skip if user is typing in an input field
+            const tag = document.activeElement?.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement?.isContentEditable) return;
+
+            const key = e.key;
+
+            if (key === 'Escape') {
+                if (document.body.classList.contains('fullscreen-mode')) {
+                    dom.fullscreenBtn.click();
+                } else if (window.svl.network) {
+                    window.svl.network.unselectAll();
+                    window.enhancements?.onNodeSelection([]);
+                }
+                return;
+            }
+
+            // All shortcuts below require a loaded graph
+            if (!window.svl.network) return;
+
+            switch (key.toLowerCase()) {
+                case 'f':
+                    dom.fullscreenBtn.click();
+                    break;
+                case 'l':
+                    dom.toggleLabelsBtn.click();
+                    break;
+                case 'p':
+                    dom.togglePhysicsBtn.click();
+                    break;
+                case 'delete':
+                case 'backspace':
+                    window.svl.network.unselectAll();
+                    window.enhancements?.onNodeSelection([]);
+                    break;
+            }
+        });
+
         checkRenderButtonState();
     }
 
