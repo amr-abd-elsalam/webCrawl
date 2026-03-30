@@ -17,6 +17,38 @@ function truncateLabel(str, maxLength = 25) {
 }
 
 // --- CSV to Ai8V Conversion Logic ---
+function parseCSVLine(line) {
+    const fields = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (inQuotes) {
+            if (ch === '"') {
+                if (i + 1 < line.length && line[i + 1] === '"') {
+                    current += '"';
+                    i++; // skip escaped quote
+                } else {
+                    inQuotes = false;
+                }
+            } else {
+                current += ch;
+            }
+        } else {
+            if (ch === '"') {
+                inQuotes = true;
+            } else if (ch === ',') {
+                fields.push(current.trim());
+                current = '';
+            } else {
+                current += ch;
+            }
+        }
+    }
+    fields.push(current.trim());
+    return fields;
+}
+
 function findColumnIndex(header, keys) {
     for (const key of keys) {
         const index = header.findIndex(h => h.toLowerCase() === key.toLowerCase());
@@ -30,7 +62,7 @@ function convertCsvToAi8V(csvText) {
     const lines = csvText.trim().split(/\r?\n/);
     if (lines.length < 2) throw new Error("ملف CSV فارغ أو غير صالح.");
 
-    const header = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+    const header = parseCSVLine(lines[0]);
 
     const colMap = {
         url: findColumnIndex(header, ['URL', 'Address', 'العنوان']),
@@ -44,7 +76,7 @@ function convertCsvToAi8V(csvText) {
     if (colMap.url === -1) throw new Error(`العمود الأساسي للرابط (URL/Address) غير موجود في ملف CSV.`);
     
     const pages = lines.slice(1).map(line => {
-        const data = line.split(',').map(d => d.replace(/"/g, ''));
+        const data = parseCSVLine(line);
         const contentType = colMap.contentType !== -1 ? data[colMap.contentType] : 'text/html';
         if (!contentType || !contentType.includes('text/html')) return null;
 
