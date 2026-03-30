@@ -710,9 +710,14 @@
         };
       }
       try {
-        sessionStorage.setItem('ai8v_crawl_data', visualizerData);
+        const payload = JSON.stringify({
+          version: 1,
+          timestamp: Date.now(),
+          data: JSON.parse(visualizerData),
+        });
+        localStorage.setItem('ai8v_crawl_data', payload);
       } catch (e) {
-        console.error('Could not write to sessionStorage:', e);
+        console.error('Could not write to localStorage:', e);
       }
     }
   }
