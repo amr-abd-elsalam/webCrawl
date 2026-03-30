@@ -21,6 +21,8 @@ document.addEventListener("DOMContentLoaded", function() {
         _hiddenEdgeIds: new Set(),
         _hiddenNodes: [],
         _ctxTargetNodeId: null,
+        communityStats: null,
+        communityColors: {},
     };
 
     const dom = {
@@ -230,10 +232,21 @@ document.addEventListener("DOMContentLoaded", function() {
         dom.searchInput.value = '';
     }
 
-    function renderFromProcessedData({ fullSearchIndex, edges }) {
+    function renderFromProcessedData({ fullSearchIndex, edges, communityStats }) {
         try {
             resetUI();
             window.svl.fullSearchIndex = fullSearchIndex;
+            window.svl.communityStats = communityStats || null;
+            
+            // Pre-compute community colors
+            if (communityStats && communityStats.count > 0) {
+                window.svl.communityColors = {};
+                const hueStep = 360 / Math.max(communityStats.count, 1);
+                for (let i = 0; i < communityStats.count; i++) {
+                    const hue = Math.round(i * hueStep) % 360;
+                    window.svl.communityColors[i] = `hsl(${hue}, 70%, 55%)`;
+                }
+            }
             
             dom.placeholder.classList.add('d-none');
             dom.graphContainer.classList.remove('d-none');
@@ -359,6 +372,12 @@ document.addEventListener("DOMContentLoaded", function() {
                     newProperties.color = color;
                     newProperties.value = 1 + (score / 10);
                     newProperties.label = String(score);
+                    break;
+                }
+                case 'community': {
+                    const cId = page.seo?._computed?.communityId ?? 0;
+                    newProperties.color = window.svl.communityColors[cId] || '#cccccc';
+                    newProperties.label = truncateLabel(pageTitle);
                     break;
                 }
                 case 'linkEquity':
