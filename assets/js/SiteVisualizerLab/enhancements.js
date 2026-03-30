@@ -228,6 +228,40 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         },
 
+        autoLoadFromSession() {
+            try {
+                const raw = sessionStorage.getItem('ai8v_crawl_data');
+                if (!raw || raw.length < 10) return; // No data or too short
+
+                const parsed = JSON.parse(raw);
+
+                if (!Array.isArray(parsed) || parsed.length === 0) {
+                    this.showToast('بيانات الجلسة غير صالحة — يرجى لصق البيانات يدوياً.', 'error', 'خطأ في التحميل التلقائي');
+                    return;
+                }
+
+                // Validate minimum schema: first item must have url and seo
+                const sample = parsed[0];
+                if (!sample.url || !sample.seo) {
+                    this.showToast('بيانات الجلسة لا تتوافق مع الصيغة المطلوبة.', 'error', 'خطأ في التحميل التلقائي');
+                    return;
+                }
+
+                // Data looks valid — auto-load it
+                dom.jsonInput.value = raw;
+                this.showToast(
+                    `تم تحميل بيانات الزحف تلقائياً (${parsed.length} صفحة). جارِ بناء الخريطة...`,
+                    'success',
+                    'تحميل تلقائي'
+                );
+                this.processWithWorker(raw, 'json');
+
+            } catch (e) {
+                // JSON.parse failed or other error — silently ignore
+                console.warn('Auto-load from sessionStorage failed:', e.message);
+            }
+        },
+
         initialize() {
             window.showToast = (msg, type, title) => this.showToast(msg, type, title);
 
@@ -323,6 +357,9 @@ document.addEventListener("DOMContentLoaded", function() {
             
             this.updateLegend('linkEquity');
             this.updateInspector(null);
+
+            // ── Auto-load from sessionStorage (integration with Crawler tool) ──
+            this.autoLoadFromSession();
         }
     };
 
