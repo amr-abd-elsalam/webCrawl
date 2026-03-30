@@ -409,3 +409,27 @@ body.fullscreen-mode .visualizer-column {
   background: var(--bs-border-color-translucent);
   margin: 0.25rem 0;
 }
+
+/* ── Community Detection ── */
+
+.community-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  vertical-align: middle;
+}
+
+#view-legend .community-legend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.4rem;
+}
+
+#view-legend .community-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+}
