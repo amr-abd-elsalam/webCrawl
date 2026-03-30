@@ -472,6 +472,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 document.querySelectorAll('#visualizer-page-list li').forEach(item => {
                     item.classList.remove('d-none');
                 });
+                // Deselect when search is cleared
+                if (window.svl.network) {
+                    window.svl.network.unselectAll();
+                    window.enhancements?.onNodeSelection([]);
+                }
                 return;
             }
             let firstMatch = null;
@@ -482,10 +487,24 @@ document.addEventListener("DOMContentLoaded", function() {
                 item.classList.toggle('d-none', !isVisible);
                 if (isVisible && !firstMatch) firstMatch = item;
             });
-            // Auto-focus the first match in the graph
+            // Auto-focus, select, and pulse the first match in the graph
             if (firstMatch && window.svl.network) {
                 const nodeId = firstMatch.dataset.nodeId;
-                window.svl.network.focus(nodeId, { scale: 1.0, animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
+                window.svl.network.focus(nodeId, { scale: 1.2, animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
+                window.svl.network.selectNodes([nodeId]);
+                window.enhancements?.onNodeSelection([nodeId]);
+
+                // Pulse effect: briefly enlarge then restore
+                if (window.svl.currentNodes) {
+                    const original = window.svl.currentNodes.get(nodeId);
+                    if (original) {
+                        const originalValue = original.value;
+                        window.svl.currentNodes.update({ id: nodeId, value: (originalValue || 1) * 3 });
+                        setTimeout(() => {
+                            window.svl.currentNodes.update({ id: nodeId, value: originalValue });
+                        }, 600);
+                    }
+                }
             }
         });
 
