@@ -187,6 +187,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
             const seo = page.seo || {};
             const analysis = seo.contentAnalysis || {};
+            const computed = seo._computed || {};
+
             dom.inspector.title.textContent = page.title || page.url;
             dom.inspector.title.title = page.title || page.url;
             dom.inspector.url.href = page.url;
@@ -198,6 +200,73 @@ document.addEventListener("DOMContentLoaded", function() {
             if (seo.isNoIndex) statusText = 'NoIndex';
             else if (seo.isOrphan) statusText = 'يتيمة';
             dom.inspector.status.textContent = statusText;
+
+            // PageRank & Betweenness scores
+            const prEl = document.getElementById('inspector-pagerank');
+            const bcEl = document.getElementById('inspector-betweenness');
+            if (prEl) prEl.textContent = computed.pageRankScore ?? 'N/A';
+            if (bcEl) bcEl.textContent = computed.betweennessScore ?? 'N/A';
+
+            // ── Build Inlinks list ──
+            const inlinksItems = document.getElementById('inspector-inlinks-items');
+            const inlinksCount = document.getElementById('inspector-inlinks-count');
+            const outlinksItems = document.getElementById('inspector-outlinks-items');
+            const outlinksCount = document.getElementById('inspector-outlinks-count');
+
+            if (inlinksItems && outlinksItems) {
+                // Find pages that link TO this page
+                const incomingPages = window.svl.fullSearchIndex.filter(p => 
+                    p.url !== nodeId && 
+                    (p.seo?.contentAnalysis?.outgoingInternalLinks || []).includes(nodeId)
+                );
+                
+                inlinksCount.textContent = incomingPages.length;
+                inlinksItems.innerHTML = '';
+                
+                const inFragment = document.createDocumentFragment();
+                incomingPages.forEach(p => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item list-group-item-action text-truncate';
+                    li.textContent = p.title || p.url;
+                    li.title = p.url;
+                    li.addEventListener('click', () => {
+                        if (window.svl.network) {
+                            window.svl.network.focus(p.url, { scale: 1.2, animation: true });
+                            window.svl.network.selectNodes([p.url]);
+                            this.onNodeSelection([p.url]);
+                        }
+                    });
+                    inFragment.appendChild(li);
+                });
+                inlinksItems.appendChild(inFragment);
+
+                // ── Build Outlinks list ──
+                const outgoingUrls = analysis.outgoingInternalLinks || [];
+                const pageMap = new Map(window.svl.fullSearchIndex.map(p => [p.url, p]));
+                const outgoingPages = outgoingUrls
+                    .filter(url => url !== nodeId && pageMap.has(url))
+                    .map(url => pageMap.get(url));
+                
+                outlinksCount.textContent = outgoingPages.length;
+                outlinksItems.innerHTML = '';
+                
+                const outFragment = document.createDocumentFragment();
+                outgoingPages.forEach(p => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item list-group-item-action text-truncate';
+                    li.textContent = p.title || p.url;
+                    li.title = p.url;
+                    li.addEventListener('click', () => {
+                        if (window.svl.network) {
+                            window.svl.network.focus(p.url, { scale: 1.2, animation: true });
+                            window.svl.network.selectNodes([p.url]);
+                            this.onNodeSelection([p.url]);
+                        }
+                    });
+                    outFragment.appendChild(li);
+                });
+                outlinksItems.appendChild(outFragment);
+            }
 
             dom.inspector.placeholder.classList.add('d-none');
             dom.inspector.details.classList.remove('d-none');
